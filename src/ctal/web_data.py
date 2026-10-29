@@ -25,6 +25,52 @@ def days_since(since: str, today: date | None = None) -> int:
     return max(0, ((today or ad_library_today()) - date.fromisoformat(since)).days)
 
 
+STATUSES = ("all", "active", "inactive")
+KINDS = ("all", "video", "image")
+
+
+def parse_status(value: str | None) -> str:
+    value = (value or "all").lower()
+    if value not in STATUSES:
+        raise ValueError("Trạng thái chỉ nhận all / active / inactive.")
+    return value
+
+
+def parse_kind(value: str | None) -> str:
+    value = (value or "all").lower()
+    if value not in KINDS:
+        raise ValueError("Loại chỉ nhận all / video / image.")
+    return value
+
+
+def by_kind(ads: list[Ad], kind: str) -> list[Ad]:
+    """Keep the ads of creatives of the chosen type. A creative is Video when at least one of its ads
+    carries a video link — DCO / carousel / multi-image included — otherwise it is Image."""
+    if kind == "all":
+        return ads
+    video: dict[str, bool] = {}
+    for a in ads:
+        video[a.creative_key] = video.get(a.creative_key, False) or a.kind == "video"
+    want = kind == "video"
+    return [a for a in ads if video[a.creative_key] == want]
+
+
+def filtered(ads: list[Ad], status: str, kind: str) -> list[Ad]:
+    return by_kind(by_status(ads, status), kind)
+
+
+def by_status(ads: list[Ad], status: str) -> list[Ad]:
+    """Keep the ads of creatives in the chosen state. A creative is Active while at least one of its
+    ads still runs (same rule as the ● Active chip on a card); otherwise it is Inactive."""
+    if status == "all":
+        return ads
+    running: dict[str, bool] = {}
+    for a in ads:
+        running[a.creative_key] = running.get(a.creative_key, False) or a.is_active
+    want = status == "active"
+    return [a for a in ads if running[a.creative_key] == want]
+
+
 def parse_range(since: str | None, until: str | None, default_days: int) -> tuple[str, str]:
     """Validated [since, until] from the page's date filter, else the default window."""
     d_since, d_until = window(default_days)
@@ -56,12 +102,13 @@ def download_name(app: str, ad: Ad, first_day: str) -> str:
     return "_".join(slug(x) for x in (app, ad.page_name, first_day, ad.ad_archive_id)) + ext
 
 
-def library(con: sqlite3.Connection, entries: list[cl.Entry], thumbs_dir: Path, since: str, until: str) -> dict:
+def library(con: sqlite3.Connection, entries: list[cl.Entry], thumbs_dir: Path, since: str, until: str,
+            status: str = "all", kind: str = "all") -> dict:
     """One card per creative (Meta's "N ads use this creative" group) whose first day is in [since, until]."""
     page_app = _page_ids(con, entries)
     cards, new_ads, reused = [], 0, 0
     for pid, app in page_app.items():
-        ads = storage.load_ads(con, pid)
+        ads = filtered(storage.load_ads(con, pid), status, kind)
         by_id = {a.ad_archive_id: a for a in ads}
         first = {c.key: c.first_day for c in creatives_of(ads)}
         for a in ads:                       # new ADS in the window, and how many reuse an older creative
@@ -76,7 +123,8 @@ def library(con: sqlite3.Connection, entries: list[cl.Entry], thumbs_dir: Path, 
             with_thumb = next((a for a in members if thumb_path(thumbs_dir, a.ad_archive_id).exists()), None)
             cards.append({
                 "key": c.key, "ad_id": rep.ad_archive_id, "first_day": c.first_day, "n_ads": len(members),
-                "app": app, "page_id": pid, "page_name": rep.page_name, "kind": rep.kind,
+                "app": app, "page_id": pid, "page_name": rep.page_name,
+                "kind": "video" if any(a.kind == "video" for a in members) else "image",
                 "fmt": rep.display_format, "active": any(a.is_active for a in members),
                 "text": rep.body or rep.title or "", "dest": c.destination,
                 "thumb": f"/thumbs/{with_thumb.ad_archive_id}.jpg" if with_thumb else None,
@@ -84,7 +132,7 @@ def library(con: sqlite3.Connection, entries: list[cl.Entry], thumbs_dir: Path, 
                 "file": download_name(app, rep, c.first_day),
             })
     cards.sort(key=lambda x: (x["first_day"], x["ad_id"]), reverse=True)
-    return {"since": since, "until": until, "today": ad_library_today().isoformat(), "cards": cards,
+    return {"since": since, "until": until, "today": ad_library_today().isoformat(), "status": status, "kind": kind, "cards": cards,
             "new_ads": new_ads, "reused_ads": reused}
 
 
@@ -116,7 +164,8 @@ def scan_plan(con: sqlite3.Connection, entries: list[cl.Entry], app: str | None 
     return [{k: v for k, v in i.items() if k != "_order"} for i in items]
 
 
-def competitors(con: sqlite3.Connection, entries: list[cl.Entry], since: str, until: str) -> dict:
+def competitors(con: sqlite3.Connection, entries: list[cl.Entry], since: str, until: str,
+                status: str = "all", kind: str = "all") -> dict:
     # Daily series always span the last 14 days too: the page's "today / 7 days / 14 days" tiles need
     # them whatever window is being viewed (tables and charts filter to the window client-side).
     k_since, k_until = window(14)
@@ -131,7 +180,7 @@ def competitors(con: sqlite3.Connection, entries: list[cl.Entry], since: str, un
                 continue
             seen.add(pid)
             loaded = storage.load_page(con, pid) if pid else None
-            ads = storage.load_ads(con, pid) if loaded else []
+            ads = filtered(storage.load_ads(con, pid), status, kind) if loaded else []
             app_ads += ads
             info = loaded[0] if loaded else None
             pages.append({
@@ -145,4 +194,4 @@ def competitors(con: sqlite3.Connection, entries: list[cl.Entry], since: str, un
                      "scanned": any(p["scan"] for p in pages),
                      "days": [[r.day, r.new_ads, r.new_creatives, r.new_sets] for r in daily_rows(app_ads, d_since, d_until)]})
     apps.sort(key=lambda a: (not a["scanned"], a["app"].lower()))
-    return {"since": since, "until": until, "today": ad_library_today().isoformat(), "apps": apps}
+    return {"since": since, "until": until, "today": ad_library_today().isoformat(), "status": status, "kind": kind, "apps": apps}

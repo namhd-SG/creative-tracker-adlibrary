@@ -57,7 +57,7 @@ def test_quick_range_chips_in_the_page(site, browser):
     page.wait_for_selector('#rangeChips [data-range="yday"].on')
     assert page.input_value("#fTo") == yday
     assert any(f"since={yday}&until={yday}" in u for u, _ in requests if "/api/library" in u)
-    assert "từ " + f"{yday[8:10]}/{yday[5:7]}" in page.inner_text("#scanRange")
+    assert f"trong khoảng {yday[8:10]}/{yday[5:7]} → hôm nay" in page.inner_text("#scanRange")
     assert page.locator('#rangeChips [data-range="yday"]').get_attribute("class") == "chip on"
     assert page.is_hidden("#laNote")                              # yesterday is a complete day
 

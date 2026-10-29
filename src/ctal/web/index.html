@@ -92,7 +92,9 @@ dialog ol{font-size:13px;padding-left:18px;margin:8px 0;color:var(--mute)}.check
 .scanrange{font-size:12px;color:var(--mute)}.scanrange b{color:var(--ink)}.scanrange .w{color:#b45309}
 .st{display:inline-block;font-size:12px;line-height:18px;padding:1px 9px;border-radius:999px;white-space:nowrap;background:var(--grid);color:var(--mute)}
 .st.q{border:1px dashed var(--line)}.st.run{background:#dbeafe;color:#1d4ed8}.st.ok{background:#dcfce7;color:#166534}.st.warn{background:#fef3c7;color:#92400e}
-.st.err{background:#fee2e2;color:#b91c1c}
+.st.err{background:#fee2e2;color:#b91c1c}.st.info{background:var(--grid);color:var(--ink)}
+.fgroup{display:flex;gap:6px;align-items:center;font-size:13px}.fgroup b{font-size:13px}
+.st2{font-size:12px;color:var(--mute);margin-top:3px;line-height:1.4}.st2 b{color:var(--ink);font-weight:600}.st2 .why{color:#b45309}
 @media (prefers-color-scheme:dark){.st.run{background:#172554;color:#93c5fd}.st.ok{background:#052e16;color:#86efac}.st.warn{background:#3a2a05;color:#fcd34d}.st.err{background:#450a0a;color:#fca5a5}}
 .st.run::before{content:"";display:inline-block;width:8px;height:8px;margin-right:6px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:spin .8s linear infinite;vertical-align:-1px}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -114,6 +116,8 @@ dialog ol{font-size:13px;padding-left:18px;margin:8px 0;color:var(--mute)}.check
   <label>Page: <select id="fPage"></select></label>
   <label>Từ <input type="date" id="fFrom"></label><label>đến <input type="date" id="fTo"></label>
   <span class="chips" style="margin:0" id="rangeChips"><button class="chip" data-range="today" title="Ngày theo Ad Library (giờ Thái Bình Dương)">Hôm nay</button><button class="chip" data-range="yday" title="Ngày theo Ad Library (giờ Thái Bình Dương)">Hôm qua</button><button class="chip" data-days="7">7 ngày</button><button class="chip on" data-days="14">14 ngày</button><button class="chip" data-days="30">30 ngày</button><button class="chip" data-days="90">90 ngày</button></span>
+  <span class="fgroup"><b>Trạng thái:</b><span class="chips" style="margin:0" id="stChips"><button class="chip" data-st="all">Tất cả</button><button class="chip" data-st="active" title="Creative còn ít nhất 1 quảng cáo đang chạy">● Active</button><button class="chip" data-st="inactive" title="Mọi quảng cáo của creative đã dừng">○ Inactive</button></span></span>
+  <span class="fgroup"><b>Loại:</b><span class="chips" style="margin:0" id="kindChips"><button class="chip" data-kind="all">Tất cả</button><button class="chip" data-kind="video" title="Có ít nhất 1 video (kể cả DCO / carousel có video)">🎬 Video</button><button class="chip" data-kind="image" title="Không có video: ảnh, nhiều ảnh, carousel ảnh">🖼 Image</button></span></span>
   <span class="small" id="laNote" hidden>ngày theo Ad Library (giờ Thái Bình Dương) — hôm nay có thể chưa đủ</span>
   <span class="small">nguồn: Meta Ad Library (công khai) · áp cho cả 2 tab</span>
 </div>
@@ -123,7 +127,7 @@ dialog ol{font-size:13px;padding-left:18px;margin:8px 0;color:var(--mute)}.check
     <div class="kpis" id="kpis"></div>
     <div class="chips" id="libChips">
       <button class="chip on" data-f="all">Tất cả</button><button class="chip" data-f="new">🆕 Mới (7 ngày)</button>
-      <button class="chip" data-f="run">▶ Đang chạy</button><button class="chip" data-f="video">🎞 Video</button><button class="chip" data-f="anh">🖼 Ảnh</button>
+
       <select class="chip" id="sort"><option value="new">Sắp xếp: mới nhất</option><option value="ads">Nhiều quảng cáo dùng chung nhất</option><option value="old">Cũ nhất</option></select>
       <span class="small" id="libCount"></span><button class="chip" id="selAll">☑ Chọn hết trang này</button>
     </div>
@@ -235,18 +239,18 @@ function renderLib(){
       <input type="checkbox" class="sel" data-pick="${esc(x.key)}" ${picked.has(x.key)?'checked':''} title="Chọn để tải zip">
       ${x.thumb?`<img src="${x.thumb}" alt="" loading="lazy">`:''}<div class="pl">${x.kind==='video'?'▶':''}</div>
       ${x.first_day>=NEW_FROM?'<span class="rib new">🆕 Mới</span>':''}
-      <span class="kind">${x.kind==='video'?'🎞 video':'🖼 ảnh'}</span></div>
+      <span class="kind">${x.kind==='video'?'🎬 video':'🖼 image'}</span></div>
     <div class="cap"><b title="${esc(x.app)}">${esc(x.app)}</b><span class="small" title="${esc(x.page_name)}">${esc(x.page_name)}</span>
       ${tags(x)}
       <div class="row"><button class="dl" data-dl="${esc(x.key)}">⬇ Tải ${x.kind==='video'?'video':'ảnh'}</button><a href="${AL(x.ad_id)}" target="_blank" rel="noopener">Ad Library ↗</a></div></div></div>`).join('')
     : `<div class="empty" style="grid-column:1/-1">${!D.apps.some(a=>a.scanned) ? '<b>Chưa có dữ liệu.</b>Sang tab 🏢 Đối thủ, thêm app + page rồi bấm ↻ Quét.'
         : D.reusedAds && D.reusedAds===D.newAds ? `<b>Không có creative mới từ ${dmy($('#fFrom').value)} đến ${dmy($('#fTo').value)}.</b>Có ${D.newAds} quảng cáo mới bắt đầu chạy trong khoảng này, nhưng tất cả đều dùng lại creative cũ (đã chạy từ trước). Chọn khoảng dài hơn để xem các creative đó.`
-        : 'Không có creative nào khớp bộ lọc.'}</div>`;
+        : `Không có creative nào khớp bộ lọc${ST!=='all'||KIND!=='all'?` (đang lọc: ${[ST!=='all'?(ST==='active'?'● Active':'○ Inactive'):'', KIND!=='all'?(KIND==='video'?'🎬 Video':'🖼 Image'):''].filter(Boolean).join(' · ')})`:''}.`}</div>`;
 }
 
 // ---------- Đối thủ ----------
 function spark(days){
-  const d = days.filter(x=>inRange(x[0])), W=300, H=80, n=d.length||1, bw=W/n;
+  const d = days.filter(x=>inRange(x[0])), W=300, H=80, n=d.length||1, bw=Math.min(W/n, 24);
   const mx = Math.max(1,...d.map(x=>x[2]));
   const bars = d.map((x,i)=>`<rect x="${i*bw+1}" y="${H-x[2]/mx*(H-12)}" width="${Math.max(1,bw*0.55-1)}" height="${x[2]/mx*(H-12)}" fill="var(--blue)" rx="1"><title>${dmy(x[0])}: ${x[2]} creative · ${x[3]} bộ</title></rect>
     <rect x="${i*bw+bw*0.55}" y="${H-x[3]/mx*(H-12)}" width="${Math.max(1,bw*0.3)}" height="${x[3]/mx*(H-12)}" fill="var(--green)" rx="1"></rect>`).join('');
@@ -271,21 +275,34 @@ function statusCell(p){
     if(s.status==='running') return (s.total==null && !s.collected && !s.scrolls)
       ? `<span class="st run">đang quét · đang mở Ad Library…</span>`
       : `<span class="st run">đang quét · đã thu ${s.collected||0}${s.total!=null?'/'+s.total:''} · cuộn ${s.scrolls||0}</span>`;
-    if(s.status==='done'){ const low=(s.coverage!=null&&s.coverage<0.98)||(s.warnings||[]).some(w=>w.includes('Chạm trần'));
-      return `<span class="st ${low?'warn':'ok'}">${low?'⚠':'✓'} xong ${hhmm(s.at*1000)} · khoảng ${dmy(s.since)}–${dmy(D.today)} · ${s.collected} QC · ${pct(s.coverage)}</span>`; }
+    if(s.status==='done') return doneCell({at:s.at*1000, since:s.since, until:D.today, collected:s.collected,
+      coverage:s.coverage, warnings:s.warnings}, p);
     if(s.status==='error') return `<span class="st err" title="${esc(s.message)}">⚠ lỗi: ${esc((s.message||'').slice(0,60))}</span>`;
     if(s.status==='stopped') return `<span class="st">⏹ đã dừng</span>`;
   }
   const d = p.scan;
   if(!d) return '<span class="st">chưa quét</span>';
-  const low=(d.coverage!=null&&d.coverage<0.98)||(d.warnings||[]).some(w=>w.includes('Chạm trần'));
-  const short = d.since && d.since > $('#fFrom').value;          // viewing further back than this page was scanned
-  return `<span class="st ${low||short?'warn':'ok'}" title="${short?'Khoảng đang xem bắt đầu trước ngày đã quét — bấm ↻ Quét để lấy thêm':''}">${low||short?'⚠':'✓'} xong ${hhmm(d.at)} ${new Date(d.at).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'})} · khoảng ${dmy(d.since)}–${dmy(new Date(d.at).toISOString().slice(0,10))} · ${d.collected} QC · ${pct(d.coverage)}</span>`;
+  return doneCell({at:d.at, since:d.since, until:new Date(d.at).toISOString().slice(0,10), collected:d.collected,
+                   coverage:d.coverage, warnings:d.warnings}, p);
+}
+// "✓ xong" line + a second line that separates what was SCROLLED from what is NEW, and why there is a ⚠
+function doneCell(d, p){
+  const capped=(d.warnings||[]).some(w=>w.includes('Chạm trần'));
+  const unknown = d.coverage==null;                                   // Ad Library gave no total: not an error
+  const partial = capped || (d.coverage!=null && d.coverage<0.98);
+  const short = d.since && d.since > $('#fFrom').value;              // viewing further back than scanned
+  const why = [partial?`chưa lướt hết (${pct(d.coverage)})`:'', unknown&&!partial?'không biết tổng — Ad Library không báo số, không phải lỗi':'',
+               short?`khoảng xem bắt đầu trước ${dmy(d.since)} — bấm ↻ Quét để lấy thêm`:''].filter(Boolean);
+  const day = new Date(d.at).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'});
+  const cls = partial||short ? 'warn' : unknown ? 'info' : 'ok';
+  return `<span class="st ${cls}">${cls==='ok'?'✓':cls==='info'?'✓':'⚠'} xong ${hhmm(d.at)} ${day} · khoảng ${dmy(d.since)}–${dmy(d.until)}</span>
+    <div class="st2">đã lướt <b>${d.collected??'?'}</b> QC · <b>${p.new_creatives??0}</b> creative mới trong khoảng xem${unknown||partial?'':` · ${pct(d.coverage)}`}
+    ${why.length?`<div class="why">⚠ ${why.map(esc).join(' · ')}</div>`:''}</div>`;
 }
 function rangeInfo(){
   const from=$('#fFrom').value, days=Math.round((new Date(D.today)-new Date(from))/864e5);
   const to=$('#fTo').value, only = from===to ? ` — đang xem riêng ngày ${dmy(from)}` : '';
-  $('#scanRange').innerHTML = `Nút ↻ Quét sẽ quét quảng cáo <b>từ ${dmy(from)} → hôm nay</b> (${days?days+' ngày':'chỉ hôm nay'} — theo ô "Từ" ở trên)${only}. Không quét toàn bộ lịch sử. Ngày tính theo Ad Library (giờ Thái Bình Dương).`
+  $('#scanRange').innerHTML = `<b>Quét:</b> lấy các quảng cáo <b>đang hiển thị trong khoảng ${dmy(from)} → hôm nay</b> (${days?days+' ngày':'chỉ hôm nay'}), rồi đếm creative <b>BẮT ĐẦU</b> trong khoảng đó${only}. Quảng cáo chạy từ lâu vẫn phải lướt qua nên page lớn lâu hơn; không quét toàn bộ lịch sử. Ngày tính theo Ad Library (giờ Thái Bình Dương).`
     + (days>30 ? ` <span class="w">⚠ Khoảng dài: page lớn có thể mất hơn 10 phút.</span>` : '');
   $('#scanAll').title = `Quét mọi page, quảng cáo từ ${dmy(from)} → hôm nay`;
   $$('#rangeChips .chip').forEach(c=>{ const [f,t]=chipRange(c); c.classList.toggle('on', f===from && t===$('#fTo').value); });
@@ -403,8 +420,16 @@ $('#wzDone').onclick=async()=>{ const n=$('#appName').value.trim(); if($('#wzLin
 ['hw1','hw2','hw3'].forEach((id,i)=>$('#'+id).src='/static/howto-'+(i+1)+'.png');
 async function api(path,body){ const r=await fetch(path, body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{});
   const j=await r.json().catch(()=>({})); if(!r.ok && r.status!==409) throw new Error(j.error||('HTTP '+r.status)); return j; }
+// status / kind filters are remembered in this browser (localStorage may be blocked: then just defaults)
+const pref = (k, v) => { try{ if(v===undefined) return localStorage.getItem('ctal.'+k)||'all'; localStorage.setItem('ctal.'+k, v); }catch(e){ return 'all'; } };
+let ST = pref('status'), KIND = pref('kind');
+function markFilterChips(){ $$('#stChips .chip').forEach(c=>c.classList.toggle('on', c.dataset.st===ST));
+  $$('#kindChips .chip').forEach(c=>c.classList.toggle('on', c.dataset.kind===KIND)); }
+$$('#stChips .chip').forEach(c=>c.onclick=()=>{ ST=c.dataset.st; pref('status',ST); markFilterChips(); load(); });
+$$('#kindChips .chip').forEach(c=>c.onclick=()=>{ KIND=c.dataset.kind; pref('kind',KIND); markFilterChips(); load(); });
+markFilterChips();
 async function load(){ const keepApp=$('#fApp').value, keepPage=$('#fPage').value, keepFrom=$('#fFrom').value, keepTo=$('#fTo').value;
-  const qs = keepFrom ? `?since=${keepFrom}&until=${keepTo||''}` : '';
+  const qs = `?status=${ST}&kind=${KIND}` + (keepFrom ? `&since=${keepFrom}&until=${keepTo||''}` : '');
   const [lib,comp]=await Promise.all([api('/api/library'+qs),api('/api/competitors'+qs)]);
   D={cards:lib.cards, apps:comp.apps, today:lib.today, since:lib.since, until:lib.until, newAds:lib.new_ads, reusedAds:lib.reused_ads}; NEW_FROM=addDays(D.today,-6);
   const valid = new Set(D.cards.map(c=>c.key)); picked.forEach(k=>{ if(!valid.has(k)) picked.delete(k); }); selbar();

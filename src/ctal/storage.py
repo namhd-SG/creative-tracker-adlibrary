@@ -45,6 +45,11 @@ LATER_COLS = {"kind": "TEXT", "thumb_url": "TEXT", "video_url": "TEXT", "video_s
               "image_url": "TEXT", "title": "TEXT", "cta_text": "TEXT"}
 
 
+def kind_from_format(display_format: str | None) -> str:
+    """Rows scanned before media links were stored: only VIDEO is known to be a video."""
+    return "video" if (display_format or "").upper() == "VIDEO" else "image"
+
+
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
@@ -107,7 +112,7 @@ def load_ads(con: sqlite3.Connection, page_id: str) -> list[Ad]:
     rows = con.execute(f"SELECT {','.join(AD_COLS)} FROM ads WHERE page_id=?", (page_id,)).fetchall()
     ads = [Ad(**{c: (bool(r[c]) if c == "is_active" else r[c]) for c in AD_COLS}) for r in rows]
     for a in ads:
-        a.kind = a.kind or "video"
+        a.kind = a.kind or kind_from_format(a.display_format)
     return ads
 
 
@@ -116,7 +121,7 @@ def load_ad(con: sqlite3.Connection, ad_archive_id: str) -> Ad | None:
     if not r:
         return None
     ad = Ad(**{c: (bool(r[c]) if c == "is_active" else r[c]) for c in AD_COLS})
-    ad.kind = ad.kind or "video"
+    ad.kind = ad.kind or kind_from_format(ad.display_format)
     return ad
 
 

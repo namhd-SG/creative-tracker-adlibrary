@@ -35,14 +35,20 @@ ctal web
 
 Trình duyệt tự mở **http://127.0.0.1:8770**. Trang chỉ chạy trên máy bạn: chỉ nghe ở 127.0.0.1, không có tài khoản, không có domain. Tắt bằng `Ctrl+C` trong terminal. Cổng bận thì chạy `ctal web --port 8771`.
 
-Lần đầu mở, danh sách đối thủ có sẵn 3 app mẫu (4 page nhỏ). Sang tab **🏢 Đối thủ**, bấm **↻ Quét tất cả** (khoảng 3 phút) để có dữ liệu.
+Lần đầu mở, danh sách đối thủ có sẵn 3 app mẫu (5 page nhỏ). Sang tab **🏢 Đối thủ**, bấm **↻ Quét tất cả** (khoảng 4 phút) để có dữ liệu.
 
 ### 🎬 Thư viện
 
 ![Tab Thư viện](docs/images/web-thu-vien.jpg)
 
 - Đầu trang: số **creative mới / bộ mới** hôm nay và 7 ngày, quảng cáo mới 7 ngày.
-- Lọc theo app, page, khoảng ngày. Chip lọc: Mới (7 ngày) · Đang chạy · Video · Ảnh. Sắp xếp: mới nhất / nhiều quảng cáo dùng chung nhất / cũ nhất.
+- Lọc theo app, page, khoảng ngày. Chip: Mới (7 ngày). Sắp xếp: mới nhất / nhiều quảng cáo dùng chung nhất / cũ nhất.
+- **Bộ lọc chung trên thanh lọc** (áp cho cả 2 tab, trình duyệt tự nhớ lựa chọn):
+  - **Trạng thái:** Tất cả · ● Active · ○ Inactive. Một creative là **Active** khi còn ít nhất 1 quảng cáo của nó đang chạy; mọi quảng cáo đã dừng thì là **Inactive**.
+  - **Loại:** Tất cả · 🎬 Video · 🖼 Image. Một creative là **Video** khi ít nhất 1 quảng cáo của nó có video; không có video thì là **Image**. Quảng cáo **DCO, carousel, nhiều ảnh** theo đúng luật này: có video thì tính Video, không có thì tính Image.
+  - Ở tab Đối thủ, số creative mới / bộ mới của page và app cũng tính theo trạng thái và loại đang chọn.
+![Lọc 🖼 Image](docs/images/web-loc-image.jpg)
+
 - Mỗi thẻ là **một creative**. Hàng chip gồm: **▶ ngày bắt đầu chạy** · **● Active** (còn quảng cáo đang chạy) / **○ Inactive** · **×N QC** (số quảng cáo dùng chung creative).
 - **Bấm vào ảnh** để mở hộp xem: phát video, kèm nội dung quảng cáo và link đích.
 
@@ -68,6 +74,7 @@ Lần đầu mở, danh sách đối thủ có sẵn 3 app mẫu (4 page nhỏ).
 
 ### Quét như thế nào
 
+- **Chọn "Hôm nay" rồi bấm Quét có chỉ lấy creative hôm nay không?** Số đếm và thẻ hiển thị thì có: chỉ tính creative **bắt đầu chạy** hôm nay. Nhưng tool vẫn phải **lướt qua mọi quảng cáo đang hiển thị hôm nay**, kể cả quảng cáo chạy từ lâu (Ad Library không lọc được theo ngày bắt đầu). Vì vậy cột trạng thái ghi 2 số riêng, ví dụ "đã lướt **1510** QC · **6** creative mới trong khoảng xem".
 - **Quét theo khoảng ngày, không quét toàn bộ lịch sử.** Mọi nút ↻ Quét (từng page, cả app, tất cả) lấy quảng cáo **từ ngày "Từ" trên thanh lọc → hôm nay**. Mặc định là 14 ngày; chip **Hôm nay / Hôm qua / 7 / 14 / 30 / 90 ngày** đổi nhanh, dùng chung cho phần hiển thị và khoảng quét. Dòng chữ dưới tiêu đề tab Đối thủ luôn ghi rõ khoảng sẽ quét.
 - **Ngày tính theo Ad Library = giờ Thái Bình Dương (Los Angeles)**, chậm hơn giờ Việt Nam 14–15 tiếng. "Hôm nay" là ngày hiện tại ở LA và có thể chưa đủ: quảng cáo của ngày đó còn tiếp tục xuất hiện tới nửa đêm giờ LA.
 - **Hôm qua:** quét quảng cáo có hiển thị từ hôm qua, rồi chỉ hiện **creative bắt đầu chạy đúng hôm qua**. Hôm đó có quảng cáo mới nhưng tất cả dùng lại creative cũ thì trang ghi rõ "Có N quảng cáo mới … đều dùng lại creative cũ", không để trống mà không giải thích.
@@ -91,7 +98,7 @@ Mọi thao tác trên web đều có lệnh tương ứng ở terminal (mục d�
 
 ## Thêm đối thủ bằng lệnh (terminal)
 
-Cấu trúc: **app đối thủ → các page của app đó**. Danh sách nằm trong một file `doi_thu.csv` (mở được bằng Excel/Numbers), 4 cột: `app, link_store, link_ad_library, ghi_chu`. Mỗi page một dòng. Lần chạy đầu, tool tạo `doi_thu.csv` từ danh sách mẫu `doi_thu.mau.csv` (3 app, 4 page nhỏ, quét thử ~2–3 phút); bạn sửa hoặc xoá tuỳ ý.
+Cấu trúc: **app đối thủ → các page của app đó**. Danh sách nằm trong một file `doi_thu.csv` (mở được bằng Excel/Numbers), 4 cột: `app, link_store, link_ad_library, ghi_chu`. Mỗi page một dòng. Lần chạy đầu, tool tạo `doi_thu.csv` từ danh sách mẫu `doi_thu.mau.csv` (3 app, 5 page nhỏ, quét thử ~4 phút); bạn sửa hoặc xoá tuỳ ý.
 
 **1. Thêm app** (tên tuỳ đặt + link store):
 
@@ -140,7 +147,7 @@ Tool tự nghỉ 8–15 giây giữa các page. **Thời gian quét phụ thuộ
 | ~1.100 quảng cáo | ~4–5 phút | Clash of Clans 1.135 |
 | vài nghìn quảng cáo | **>10 phút**, chạm trần cuộn ⇒ báo "chưa thu hết" | các page app AI lớn ~4.800 |
 
-**Danh sách mẫu** (3 app, 4 page nhỏ) quét hết khoảng **2–3 phút** (đo: 148 giây). Danh sách dài có page lớn thì nên chạy qua đêm (xem mục Quét hằng ngày). Muốn nhanh hơn thì hạ `--max-scrolls` (ví dụ `--max-scrolls 30` ≈ tối đa ~2 phút/page), đánh đổi là page lớn bị báo "chưa thu hết".
+**Danh sách mẫu** (3 app, 5 page nhỏ, có cả quảng cáo video lẫn ảnh) quét hết khoảng **4 phút** (đo: 224 giây). Danh sách dài có page lớn thì nên chạy qua đêm (xem mục Quét hằng ngày). Muốn nhanh hơn thì hạ `--max-scrolls` (ví dụ `--max-scrolls 30` ≈ tối đa ~2 phút/page), đánh đổi là page lớn bị báo "chưa thu hết".
 
 | Tuỳ chọn | Ý nghĩa |
 |---|---|

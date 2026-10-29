@@ -97,9 +97,11 @@ class Handler(BaseHTTPRequestHandler):
                 return self._file(a.thumbs / f"{m.group(1)}.jpg")
             if path in ("/api/library", "/api/competitors"):
                 since, until = web_data.parse_range(q.get("since", [None])[0], q.get("until", [None])[0], a.days)
+                status = web_data.parse_status(q.get("status", [None])[0])
+                kind = web_data.parse_kind(q.get("kind", [None])[0])
                 if path == "/api/library":
-                    return self._json(web_data.library(a.con(), a.entries(), a.thumbs, since, until))
-                return self._json(web_data.competitors(a.con(), a.entries(), since, until))
+                    return self._json(web_data.library(a.con(), a.entries(), a.thumbs, since, until, status, kind))
+                return self._json(web_data.competitors(a.con(), a.entries(), since, until, status, kind))
             if path == "/api/scan":
                 return self._json(a.scans.status())
             if m := re.fullmatch(r"/api/media/(\d+)", path):
