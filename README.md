@@ -1,5 +1,7 @@
 # Creative Tracker — bản Ad Library (cơ bản)
 
+📘 **[Hướng dẫn cài đặt](HUONG-DAN-CAI-DAT.md)** (cho người không biết code, máy Mac) · 📗 **[Hướng dẫn sử dụng](HUONG-DAN-SU-DUNG.md)** (có ảnh từng bước)
+
 Bạn lập **danh sách đối thủ**: mỗi app, kèm các fanpage chạy quảng cáo cho app đó (tự tìm trên Ad Library rồi dán link vào). Với mỗi page, tool trả lời 3 câu:
 
 1. **Page này của ai?** Tên page, page_id, tổ chức chịu trách nhiệm (Meta xác nhận), ngành, lượt thích, Instagram, ngày tạo page, quốc gia của người quản lý.
@@ -11,6 +13,8 @@ Dữ liệu lấy từ trang công khai [Meta Ad Library](https://www.facebook.c
 ---
 
 ## Cài đặt (macOS)
+
+**Cách nhanh:** trong thư mục tool chạy `bash cai-dat.sh`, rồi nhấp đúp `mo-tool.command`. Chi tiết từng bước cho người không biết code: [HUONG-DAN-CAI-DAT.md](HUONG-DAN-CAI-DAT.md). Cách thủ công:
 
 Cần **Python 3.10 trở lên**. Kiểm bằng `python3 --version`. Chưa có thì cài: `brew install python`.
 
