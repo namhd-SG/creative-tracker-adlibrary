@@ -94,5 +94,12 @@ def load_ads(con: sqlite3.Connection, page_id: str) -> list[Ad]:
     return [Ad(**{c: (bool(r[c]) if c == "is_active" else r[c]) for c in AD_COLS}) for r in rows]
 
 
+def page_id_for_input(con: sqlite3.Connection, user_input: str) -> str | None:
+    """page_id a fanpage link resolved to on its last scan (links without an id in them)."""
+    r = con.execute("SELECT page_id FROM pages WHERE input=? ORDER BY last_scan_at DESC LIMIT 1",
+                    (user_input,)).fetchone()
+    return r[0] if r else None
+
+
 def list_pages(con: sqlite3.Connection) -> list[str]:
     return [r[0] for r in con.execute("SELECT page_id FROM pages ORDER BY page_id")]

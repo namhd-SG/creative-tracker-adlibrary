@@ -9,6 +9,24 @@ from pathlib import Path
 from ctal.daily_counts import DayRow
 from ctal.parse_ad_library_payload import PageInfo
 
+BASE_CSS = """
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1c1e21;--mute:#65676b;--line:#e4e6eb;--ads:#b8c4d6;--cr:#1877f2;--set:#0b8a5f}
+@media (prefers-color-scheme:dark){:root{--bg:#18191a;--card:#242526;--ink:#e4e6eb;--mute:#b0b3b8;--line:#3a3b3c;--ads:#4a5568}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+main{max-width:1080px;margin:0 auto;padding:24px 16px}h1{font-size:24px;margin:0 0 4px}.sub{color:var(--mute);margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:16px}
+h2{font-size:16px;margin:0 0 12px}dl{display:grid;grid-template-columns:200px 1fr;gap:6px 16px;margin:0}dt{color:var(--mute)}dd{margin:0}
+.owner{font-size:18px;font-weight:600}
+.chart{display:flex;align-items:flex-end;gap:4px;height:220px;padding-top:8px;overflow-x:auto}
+.col{flex:1 0 28px;display:flex;flex-direction:column;align-items:center;height:100%}
+.stack{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center;gap:2px}.b{width:30%;min-height:1px;border-radius:3px 3px 0 0}
+.ads{background:var(--ads)}.cr{background:var(--cr)}.set{background:var(--set)}.lbl{font-size:11px;color:var(--mute);margin-top:4px}
+.legend{display:flex;gap:16px;font-size:13px;color:var(--mute);margin-top:10px;flex-wrap:wrap}.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line)}th{color:var(--mute);font-weight:500;font-size:13px}
+td.ids{font-size:12px}td:first-child{white-space:nowrap}a{color:var(--cr)}.warn{border-color:#e0a800}.note{color:var(--mute);font-size:13px}
+@media (max-width:640px){dl{grid-template-columns:1fr}dt{margin-top:6px}}
+"""
+
 DAILY_HEADER = ["ngay", "quang_cao_moi", "creative_moi", "bo_moi"]
 
 
@@ -95,23 +113,7 @@ def write_html(path: Path, info: PageInfo, rows: list[DayRow], sets: list[dict],
     page = f"""<!doctype html><html lang="vi"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Creative Tracker — {_e(info.page_name)}</title>
-<style>
-:root{{--bg:#f6f7f9;--card:#fff;--ink:#1c1e21;--mute:#65676b;--line:#e4e6eb;--ads:#b8c4d6;--cr:#1877f2;--set:#0b8a5f}}
-@media (prefers-color-scheme:dark){{:root{{--bg:#18191a;--card:#242526;--ink:#e4e6eb;--mute:#b0b3b8;--line:#3a3b3c;--ads:#4a5568}}}}
-*{{box-sizing:border-box}}body{{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}}
-main{{max-width:1080px;margin:0 auto;padding:24px 16px}}h1{{font-size:24px;margin:0 0 4px}}.sub{{color:var(--mute);margin:0 0 20px}}
-.card{{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:16px}}
-h2{{font-size:16px;margin:0 0 12px}}dl{{display:grid;grid-template-columns:200px 1fr;gap:6px 16px;margin:0}}dt{{color:var(--mute)}}dd{{margin:0}}
-.owner{{font-size:18px;font-weight:600}}
-.chart{{display:flex;align-items:flex-end;gap:4px;height:220px;padding-top:8px;overflow-x:auto}}
-.col{{flex:1 0 28px;display:flex;flex-direction:column;align-items:center;height:100%}}
-.stack{{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center;gap:2px}}.b{{width:30%;min-height:1px;border-radius:3px 3px 0 0}}
-.ads{{background:var(--ads)}}.cr{{background:var(--cr)}}.set{{background:var(--set)}}.lbl{{font-size:11px;color:var(--mute);margin-top:4px}}
-.legend{{display:flex;gap:16px;font-size:13px;color:var(--mute);margin-top:10px;flex-wrap:wrap}}.legend i{{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}}
-table{{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}}th,td{{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line)}}th{{color:var(--mute);font-weight:500;font-size:13px}}
-td.ids{{font-size:12px}}td:first-child{{white-space:nowrap}}a{{color:var(--cr)}}.warn{{border-color:#e0a800}}.note{{color:var(--mute);font-size:13px}}
-@media (max-width:640px){{dl{{grid-template-columns:1fr}}dt{{margin-top:6px}}}}
-</style></head><body><main>
+<style>{BASE_CSS}</style></head><body><main>
 <h1>{_e(info.page_name or info.page_id)}</h1>
 <p class="sub">{scan_line}</p>
 {f'<div class="card warn"><h2>Cảnh báo</h2><ul>{warn}</ul></div>' if warn else ''}

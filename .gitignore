@@ -8,3 +8,4 @@ scratch_*.py
 .pytest_cache/
 .DS_Store
 plans/
+doi_thu.csv

@@ -1,6 +1,6 @@
 # Creative Tracker — bản Ad Library (cơ bản)
 
-Đưa vào **link fanpage Facebook**, tool trả lời 3 câu:
+Bạn lập **danh sách đối thủ**: mỗi app, kèm các fanpage chạy quảng cáo cho app đó (tự tìm trên Ad Library rồi dán link vào). Với mỗi page, tool trả lời 3 câu:
 
 1. **Page này của ai?** Tên page, page_id, tổ chức chịu trách nhiệm (Meta xác nhận), ngành, lượt thích, Instagram, ngày tạo page, quốc gia của người quản lý.
 2. **Mỗi ngày có bao nhiêu creative mới?**
@@ -27,19 +27,49 @@ Kiểm cài xong: `ctal --help`.
 
 > Mở terminal mới thì chạy lại `cd creative-tracker-adlibrary && source .venv/bin/activate` trước khi dùng `ctal`.
 
-## Chạy
+## Thêm đối thủ
+
+Cấu trúc: **app đối thủ → các page của app đó**. Danh sách nằm trong một file `doi_thu.csv` (mở được bằng Excel/Numbers), 4 cột: `app, link_store, link_ad_library, ghi_chu`. Mỗi page một dòng. Lần chạy đầu, tool tạo `doi_thu.csv` từ danh sách mẫu `doi_thu.mau.csv` (vài app có sẵn để thử); bạn sửa hoặc xoá tuỳ ý.
+
+**1. Thêm app** (tên tuỳ đặt + link store):
 
 ```bash
-# 1 page: dán link fanpage, tên đường dẫn, hoặc page_id đều được
-ctal scan https://www.facebook.com/ClashofClans
-
-# nhiều page: liệt kê liền nhau; tool tự nghỉ 8–15 giây giữa các page
-ctal scan https://www.facebook.com/ClashofClans highlandscoffeevietnam 15087023444
+ctal app add "Hailuo AI" "https://play.google.com/store/apps/details?id=ai.hailuo.video"
 ```
 
-Mỗi page mất khoảng **15 giây** (page vài chục quảng cáo) tới **4–5 phút** (page ~1.100 quảng cáo trong 14 ngày).
+**2. Tìm page của app trên Ad Library**
 
-Tuỳ chọn:
+Mở [facebook.com/ads/library](https://www.facebook.com/ads/library/), chọn **All** (quốc gia) và **All ads**. Gõ tên page hoặc tên app vào ô tìm kiếm. Đặt trong ngoặc kép để tìm đúng cụm, ví dụ `"Hailuo AI APP"`.
+
+![Bước 1: gõ tên page trong Ad Library](docs/images/buoc-1-tim-ten-page.png)
+
+Trong kết quả, bấm vào **tên page** trên một quảng cáo, sẽ mở ra trang riêng của page đó:
+
+![Bước 2: trang riêng của page trên Ad Library](docs/images/buoc-2-trang-page-tren-ad-library.png)
+
+Copy **link trên thanh địa chỉ**. Link đúng có dạng `…/ads/library/?…view_all_page_id=722059307667326…`.
+
+⚠ **Trùng tên là chuyện thường:** `Hailuo AI APP` và `Hailuo ai app` là hai page khác nhau. Trước khi thêm, bấm **See ad details** trên vài quảng cáo của page, kiểm nút tải/link có trỏ về **đúng app** (đúng link store) không.
+
+**3. Dán link vào app:**
+
+```bash
+ctal page add "Hailuo AI" "https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=ALL&view_all_page_id=722059307667326&search_type=page&media_type=all"
+```
+
+Ngoài link Ad Library, lệnh này cũng nhận link fanpage (`https://www.facebook.com/<tên>`) hoặc page_id trần. Thêm `--note "..."` để ghi chú.
+
+**4. Xem danh sách:** `ctal list`
+
+## Quét
+
+```bash
+ctal scan                          # quét mọi page trong doi_thu.csv rồi xuất báo cáo tổng hợp
+ctal scan --app "Hailuo AI"        # chỉ quét các page của 1 app
+ctal scan https://www.facebook.com/ClashofClans   # quét lẻ 1 page, không thêm vào danh sách
+```
+
+Tool tự nghỉ 8–15 giây giữa các page. Mỗi page mất khoảng **15 giây** (page vài chục quảng cáo) tới **4–5 phút** (page ~1.100 quảng cáo trong 14 ngày). Danh sách dài thì nên để chạy qua đêm.
 
 | Tuỳ chọn | Ý nghĩa |
 |---|---|
@@ -50,10 +80,12 @@ Tuỳ chọn:
 
 ## Đọc kết quả
 
-Terminal in một bảng, đồng thời ghi 3 file vào thư mục `out/`:
+Terminal in bảng tổng theo app. Các file nằm trong thư mục `out/`:
 
 | File | Nội dung |
 |---|---|
+| `out/tong-hop.html` | **mở bằng trình duyệt**: mỗi app một khung, gồm các page (chủ page, quảng cáo/creative/bộ mới trong kỳ, độ phủ) và dòng **Tổng app**. Bấm tên page để xem trang chi tiết |
+| `out/tong-hop-theo-app.csv` | `app, page_id, page_name, ngay, quang_cao_moi, creative_moi, bo_moi`. Dòng tổng của app có `page_name = TỔNG APP` |
 | `out/<page_id>.html` | **mở bằng trình duyệt**: thẻ "Page này của ai", biểu đồ cột theo ngày, bảng số, chi tiết từng bộ kèm link tới từng quảng cáo trên Ad Library |
 | `out/<page_id>-daily.csv` | `page_id, ngay, quang_cao_moi, creative_moi, bo_moi`, mỗi ngày một dòng (ngày không có gì vẫn có dòng, giá trị 0) |
 | `out/<page_id>-bo.csv` | mỗi bộ mới một dòng: ngày, đích, số creative, số quảng cáo, các ID thư viện |
@@ -74,16 +106,18 @@ Dữ liệu thô nằm ở `data/tracker.db` (SQLite). Quét lại cùng page th
 
 **Ví dụ số thật, Clash of Clans ngày 23/10/2026:** 80 quảng cáo mới → **28 creative** mới → **2 bộ** mới (một bộ cho App Store, một bộ cho Google Play).
 
+**Tổng app** tính trên toàn bộ quảng cáo của các page thuộc app, không cộng dồn từng page. Vì vậy 2 page cùng tung creative cho 1 app trong 1 ngày chỉ tính là 1 bộ.
+
 Muốn đổi định nghĩa "bộ" (ví dụ coi mỗi nhóm của Meta là một bộ) thì chỉ sửa hàm `set_key` trong `src/ctal/daily_counts.py`.
 
 ## Quét hằng ngày (tuỳ chọn)
 
-Quét đều mỗi ngày thì số liệu tích luỹ trong `data/tracker.db`, và trường `first_seen` cho biết lần đầu tool thấy mỗi quảng cáo. Ví dụ dùng `cron` chạy lúc 9:00 sáng:
+Quét đều mỗi ngày thì số liệu tích luỹ trong `data/tracker.db`, và trường `first_seen` cho biết lần đầu tool thấy mỗi quảng cáo. Ví dụ dùng `cron` quét cả danh sách lúc 2:00 sáng:
 
 ```bash
 crontab -e
 # thêm dòng (sửa đường dẫn cho đúng máy bạn):
-0 9 * * * cd /Users/<ban>/creative-tracker-adlibrary && .venv/bin/ctal scan ClashofClans highlandscoffeevietnam >> scan.log 2>&1
+0 2 * * * cd /Users/<ban>/creative-tracker-adlibrary && .venv/bin/ctal scan >> scan.log 2>&1
 ```
 
 ## Tìm page_id thủ công
@@ -98,6 +132,8 @@ Tool tự đổi link fanpage ra page_id. Nếu không được (page giới h�
 - **Báo cáo mặc định có 14 ngày gần nhất.** Tool lọc "quảng cáo có hiển thị từ 14 ngày trước" cho gọn rồi đếm theo ngày bắt đầu của từng quảng cáo. Quảng cáo bắt đầu trong 14 ngày chắc chắn có hiển thị trong 14 ngày đó, nên không bị sót. Muốn xa hơn thì tăng `--days`.
 - **Page lớn chưa được đo đủ độ phủ.** Tool đã thu đủ trên page ≤ ~1.100 quảng cáo trong 14 ngày (Clash of Clans 1.130/1.135). Page cỡ Nike (~2.500 quảng cáo/tuần) có thể chạm trần cuộn. Mỗi lần quét, tool in **độ phủ = thu được / số Ad Library báo** và cảnh báo khi dưới 98%.
 - **Mép cửa sổ:** một creative có quảng cáo cũ đã ngừng hiển thị trước cửa sổ, và chỉ quảng cáo mới của nó nằm trong cửa sổ, thì có thể bị đếm là creative mới. Quét hằng ngày sẽ giảm sai số này.
+- **Page dẫn qua trang web trung gian** (link quiz/landing thay vì link store) khó nhận ra khi tự tìm page. Danh sách có sẵn có thể sót những page như vậy; bạn tự thêm bằng `ctal page add`.
+- **Một page có thể quảng cáo cho nhiều app.** Số của page (và tổng app) tính **mọi** quảng cáo của page. Cột **"Trỏ đúng app x/y"** trong `tong-hop.html` cho biết bao nhiêu quảng cáo trong kỳ có link về đúng store của app; tỉ lệ thấp nghĩa là page dùng chung hoặc dẫn qua web.
 - "Creative" là cách Meta tự gom nội dung; tool không tự so sánh ảnh/video. "Bộ" là cách tính xấp xỉ theo ngày + đích.
 - Ad Library là trang web, không phải API: Meta đổi giao diện thì tool có thể hỏng. Dấu hiệu là thu 0 quảng cáo trong khi web vẫn hiện.
 - Tool cố ý đi chậm (nghỉ 2–3,5 giây mỗi lần cuộn, 8–15 giây giữa các page), không đăng nhập và không vượt rào. Gặp màn hình đòi đăng nhập thì tool dừng.
@@ -118,4 +154,6 @@ Test dùng response thật của Ad Library chụp ngày 29/10/2026 (`tests/fixt
 | `src/ctal/daily_counts.py` | **định nghĩa 3 cột**, đếm theo ngày |
 | `src/ctal/storage.py` | SQLite, upsert theo ID thư viện |
 | `src/ctal/report_outputs.py` | bảng terminal, CSV, HTML |
-| `src/ctal/cli.py` | lệnh `ctal scan` / `ctal report` |
+| `src/ctal/competitor_list.py` | danh sách đối thủ `doi_thu.csv` (app → page) |
+| `src/ctal/app_summary_report.py` | báo cáo tổng hợp theo app |
+| `src/ctal/cli.py` | lệnh `ctal app/page/list/scan/report` |
