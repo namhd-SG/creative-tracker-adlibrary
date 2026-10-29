@@ -14,6 +14,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
+from ctal.ad_media_fields import media_of
+
 # Ad Library stamps start_date at 00:00 America/Los_Angeles (measured 768/768
 # nodes). Converting in this zone yields the "Started running on" day the web shows.
 AD_LIBRARY_TZ = ZoneInfo("America/Los_Angeles")
@@ -35,6 +37,14 @@ class Ad:
     link_url: str | None
     destination: str | None  # normalized app store id / domain
     body: str | None
+    # media (see ad_media_fields): links are signed and expire ~4.5 days after the scan
+    kind: str = "video"
+    thumb_url: str | None = None
+    video_url: str | None = None
+    video_sd_url: str | None = None
+    image_url: str | None = None
+    title: str | None = None
+    cta_text: str | None = None
 
     @property
     def creative_key(self) -> str:
@@ -110,6 +120,7 @@ def ad_from_node(node: dict) -> Ad | None:
     snap = node.get("snapshot") or {}
     link = unwrap_link(_first_link(snap))
     body = (snap.get("body") or {}).get("text") if isinstance(snap.get("body"), dict) else snap.get("body")
+    m = media_of(snap)
     return Ad(
         ad_archive_id=str(node["ad_archive_id"]),
         page_id=str(node.get("page_id") or snap.get("page_id") or ""),
@@ -123,6 +134,8 @@ def ad_from_node(node: dict) -> Ad | None:
         link_url=link,
         destination=destination_of(link),
         body=body,
+        kind=m.kind, thumb_url=m.thumb_url, video_url=m.video_url, video_sd_url=m.video_sd_url,
+        image_url=m.image_url, title=m.title, cta_text=m.cta_text,
     )
 
 

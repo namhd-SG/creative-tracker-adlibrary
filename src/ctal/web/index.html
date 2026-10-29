@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Creative Tracker — Ad Library</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#16181d;--mute:#6b7280;--line:#e5e7eb;--grid:#eef0f3;--hl:#eff6ff;--blue:#2563eb;--green:#059669;--amber:#b45309}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#171a21;--ink:#e8eaee;--mute:#9aa1ad;--line:#262a33;--grid:#1e222b;--hl:#172033}}
+*{box-sizing:border-box}html,body{max-width:100%;overflow-x:hidden}
+body{margin:0;font:14px/1.45 -apple-system,Segoe UI,Inter,sans-serif;background:var(--bg);color:var(--ink)}
+header{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:10px 20px;border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:0;z-index:5}
+header h1{font-size:15px;margin:0 14px 0 0}
+nav{display:flex;flex-wrap:wrap;gap:4px}nav a{padding:6px 12px;border-radius:8px;color:var(--mute);cursor:pointer;white-space:nowrap;user-select:none}
+nav a.on{background:var(--ink);color:var(--card)}
+.fresh{margin-left:auto;font-size:12px;color:var(--mute);border:1px solid var(--line);padding:3px 10px;border-radius:999px}
+.btn{font:inherit;font-size:12px;padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;white-space:nowrap}
+.btn.pri{background:var(--blue);border-color:var(--blue);color:#fff}.btn:hover{border-color:var(--ink)}
+.filters{display:flex;flex-wrap:wrap;gap:14px;align-items:center;padding:10px 20px;background:var(--card);border-bottom:2px solid var(--blue)}
+.filters label{font-weight:600;font-size:13px;display:flex;gap:6px;align-items:center}
+.filters select{max-width:280px}.filters select,.filters input{font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+.wrap{padding:16px 20px;max-width:1440px;margin:auto}.v{display:none}.v.on{display:block}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}.panel h2{font-size:14px;margin:0 0 10px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.chip{font:inherit;font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--mute);cursor:pointer}
+.chip.on{color:var(--ink);border-color:var(--ink)}select.chip{padding:3px 8px}
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0}
+.kpi b{font-size:22px;display:block}.kpi span{font-size:12px;color:var(--mute)}.kpi em{font-style:normal;font-size:12px;color:var(--mute)}
+.feed{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}.feed>div{min-width:0}
+.vid{aspect-ratio:9/16;border-radius:10px;position:relative;overflow:hidden;background:linear-gradient(160deg,#c7d2fe,#fbcfe8)}
+.vid img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.vid .pl{position:absolute;inset:0;display:grid;place-items:center;font-size:30px;color:#fff;text-shadow:0 2px 8px #0008;pointer-events:none}
+.rib{position:absolute;left:6px;top:6px;font-size:11px;padding:1px 8px;border-radius:999px;color:#fff;font-weight:600}
+.rib.new{background:#ea580c}.rib.run{background:#0891b2}.rib.off{background:#6b7280}
+.cnt{position:absolute;right:6px;bottom:6px;background:#000a;color:#fff;font-size:11px;padding:1px 7px;border-radius:6px}
+.kind{position:absolute;right:6px;top:6px;background:#000a;color:#fff;font-size:11px;padding:1px 6px;border-radius:6px}
+.cap{font-size:12px;margin-top:6px;min-width:0}.cap b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.small{font-size:12px;color:var(--mute)}.cap .small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cap a{font-size:12px;color:var(--blue);text-decoration:none}.cap a:hover{text-decoration:underline}
+.txt{font-size:12px;color:var(--mute);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:2px}
+.empty{padding:40px;text-align:center;color:var(--mute)}
+/* Đối thủ */
+.apphead{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.apphead h3{margin:0;font-size:15px}
+.apphead .sp{flex:1}.store{font-size:12px;color:var(--blue);text-decoration:none;overflow-wrap:anywhere}
+.appbody{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;margin-top:10px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:top}th{color:var(--mute);font-weight:500;font-size:12px}
+td.pg{max-width:240px}td.pg a{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);font-weight:600;text-decoration:none}
+td.pg a:hover{color:var(--blue)}.tag{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;background:var(--grid);color:var(--mute)}
+.tag.ok{background:#dcfce7;color:#166534}.tag.warn{background:#fef3c7;color:#92400e}
+.mini h4{margin:0 0 4px;font-size:12px;color:var(--mute);font-weight:500}.mini svg{width:100%;height:90px;display:block}
+.legend{display:flex;gap:12px;font-size:11px;color:var(--mute);margin-top:4px}.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px}
+.appcard.unscanned .appbody{display:block}.sum{font-size:12px;color:var(--mute)}
+/* dialog */
+dialog{border:1px solid var(--line);border-radius:14px;padding:18px 20px;width:min(560px,92vw);background:var(--card);color:var(--ink)}
+dialog::backdrop{background:#0006}dialog h3{margin:0 0 12px;font-size:16px}
+dialog label{display:block;font-size:12px;color:var(--mute);margin:10px 0 4px}
+dialog input,dialog select{width:100%;font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+dialog ol{font-size:13px;padding-left:18px;margin:8px 0;color:var(--mute)}.check{font-size:12px;margin-top:6px}
+.check.ok{color:var(--green)}.check.bad{color:#dc2626}.acts{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.sel{position:absolute;left:6px;bottom:6px;width:22px;height:22px;accent-color:var(--blue);cursor:pointer;z-index:2}
+.vid{cursor:zoom-in}.picked .vid{outline:3px solid var(--blue);outline-offset:-3px}
+.tags{display:flex;flex-wrap:wrap;gap:3px;margin-top:6px}
+.t{font-size:10.5px;line-height:18px;padding:0 5px;letter-spacing:-.1px;border-radius:999px;border:1px solid var(--line);color:var(--ink);white-space:nowrap;font-variant-numeric:tabular-nums}
+.t.on{background:#dcfce7;border-color:#86efac;color:#166534}.t.off{background:var(--grid);color:var(--mute)}
+@media (prefers-color-scheme:dark){.t.on{background:#052e16;border-color:#166534;color:#86efac}}
+.dl{font:inherit;font-size:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:2px 9px;cursor:pointer;margin-top:4px}
+.dl:hover{border-color:var(--ink)}.row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:4px}
+.selbar{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:15;display:none;gap:10px;align-items:center;justify-content:center;width:max-content;max-width:calc(100vw - 32px);flex-wrap:wrap;
+ background:var(--ink);color:var(--card);padding:8px 10px 8px 16px;border-radius:999px;box-shadow:0 6px 24px #0003}
+.selbar.on{display:flex}.selbar .btn{border-color:transparent}.selbar .btn.pri{background:var(--blue)}
+#dlgView{width:min(900px,96vw);padding:0;overflow:hidden}.viewgrid{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr)}
+.viewgrid video,.viewgrid img{width:100%;max-height:80vh;background:#000;display:block;aspect-ratio:9/16;object-fit:contain}
+.viewinfo{padding:16px 18px;font-size:13px;overflow:auto;max-height:80vh}.viewinfo h3{margin:0 0 4px}.viewinfo dl{display:grid;grid-template-columns:110px 1fr;gap:4px 10px;margin:12px 0}
+.viewinfo dt{color:var(--mute)}.viewinfo dd{margin:0;overflow-wrap:anywhere}.viewinfo p{white-space:pre-wrap;color:var(--mute)}
+@media (max-width:700px){.viewgrid{grid-template-columns:1fr}}
+.howto{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:14px}
+.howto summary{cursor:pointer;font-weight:600;font-size:14px}.howto .steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:12px}
+.howto .steps div{font-size:13px}.howto img{width:100%;height:150px;object-fit:cover;object-position:left top;border:1px solid var(--line);border-radius:8px;margin-top:6px;background:#fff}
+.howto b.n{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;font-size:12px;margin-right:6px}
+@media (max-width:800px){.howto .steps{grid-template-columns:1fr}}
+.bigadd{font-size:14px;padding:9px 18px}.stepper{display:flex;gap:8px;margin-bottom:6px;font-size:12px;color:var(--mute)}.stepper b{color:var(--ink)}
+.plist{margin:8px 0 0;padding:0;list-style:none}.plist li{font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;margin-top:4px;display:flex;justify-content:space-between;gap:8px}
+.toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--card);padding:8px 16px;border-radius:999px;font-size:13px;opacity:0;transition:.2s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}.btn[disabled]{opacity:.55;cursor:progress}
+.fresh.busy{border-color:var(--blue);color:var(--blue)}.empty b{display:block;color:var(--ink);font-size:15px;margin-bottom:6px}
+@media (max-width:900px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.appbody{grid-template-columns:1fr}}
+@media (max-width:560px){header,.filters,.wrap{padding-left:16px;padding-right:16px}.fresh{margin-left:0}}
+</style></head><body>
+<header>
+  <h1>📡 Creative Tracker</h1>
+  <nav id="tabs"><a class="on" data-v="lib">🎬 Thư viện</a><a data-v="comp">🏢 Đối thủ</a></nav>
+  <span class="fresh" id="fresh"></span>
+  <button class="btn" id="scanAll">↻ Quét tất cả</button>
+</header>
+<div class="filters">
+  <label>App: <select id="fApp"></select></label>
+  <label>Page: <select id="fPage"></select></label>
+  <label>Từ <input type="date" id="fFrom"></label><label>đến <input type="date" id="fTo"></label>
+  <span class="small">nguồn: Meta Ad Library (công khai) · áp cho cả 2 tab</span>
+</div>
+<div class="wrap">
+  <section class="v on" id="v-lib">
+    <div class="kpis" id="kpis"></div>
+    <div class="chips" id="libChips">
+      <button class="chip on" data-f="all">Tất cả</button><button class="chip" data-f="new">🆕 Mới (7 ngày)</button>
+      <button class="chip" data-f="run">▶ Đang chạy</button><button class="chip" data-f="video">🎞 Video</button><button class="chip" data-f="anh">🖼 Ảnh</button>
+      <select class="chip" id="sort"><option value="new">Sắp xếp: mới nhất</option><option value="ads">Nhiều quảng cáo dùng chung nhất</option><option value="old">Cũ nhất</option></select>
+      <span class="small" id="libCount"></span><button class="chip" id="selAll">☑ Chọn hết trang này</button>
+    </div>
+    <div class="feed" id="feed"></div>
+    <div class="selbar" id="selbar"><span id="selN"></span><button class="btn pri" id="zipBtn">⬇ Tải đã chọn (zip)</button><button class="btn" id="selClear">Bỏ chọn</button></div>
+  </section>
+  <section class="v" id="v-comp">
+    <div class="panel"><div class="apphead"><h2 style="margin:0" id="compTitle"></h2><span class="sp"></span>
+      <div class="chips" style="margin:0" id="compChips"><button class="chip on" data-c="all">Tất cả</button><button class="chip" data-c="done">Đã quét</button><button class="chip" data-c="todo">Chưa quét</button></div>
+      <button class="btn pri bigadd" id="addComp">＋ Thêm đối thủ</button></div>
+      <p class="small" style="margin:8px 0 0">Mỗi app đối thủ gồm các fanpage chạy quảng cáo cho app đó. Tự tìm page trên Ad Library rồi dán link vào bằng nút <b>＋ Thêm page</b>.</p>
+    </div>
+    <details class="howto" id="howto" open><summary>📌 Cách thêm đối thủ (3 bước)</summary><div class="steps">
+      <div><b class="n">1</b>Mở <a href="https://www.facebook.com/ads/library/" target="_blank" rel="noopener">Ad Library</a>, chọn <b>All</b> + <b>All ads</b>, gõ tên page/app trong "ngoặc kép".<img id="hw1" alt="Bước 1"></div>
+      <div><b class="n">2</b>Bấm tên page trên một quảng cáo → trang riêng của page mở ra → <b>copy link</b> trên thanh địa chỉ (có <code>view_all_page_id</code>).<img id="hw2" alt="Bước 2"></div>
+      <div><b class="n">3</b>Bấm <b>＋ Thêm đối thủ</b> (app mới) hoặc <b>＋ Thêm page</b> trên thẻ app → dán link → <b>↻ Quét</b>.<img id="hw3" alt="Bước 3"></div></div></details>
+    <div id="apps"></div>
+  </section>
+</div>
+
+<dialog id="dlgWiz"><h3>＋ Thêm đối thủ</h3>
+  <div class="stepper"><span id="st1"><b>① App</b></span>→<span id="st2">② Page trên Ad Library</span></div>
+  <div id="wz1"><label>Tên app</label><input id="appName" placeholder="vd. Hailuo AI">
+    <label>Link store (Google Play hoặc App Store)</label><input id="appStore" placeholder="https://play.google.com/store/apps/details?id=…">
+    <div class="acts"><button class="btn" data-close>Huỷ</button><button class="btn pri" id="wzNext">Tiếp: thêm page →</button></div></div>
+  <div id="wz2" hidden><p class="small" style="margin:0">Tìm page trên <a href="https://www.facebook.com/ads/library/" target="_blank" rel="noopener">Ad Library</a> (xem khung "Cách thêm đối thủ"), copy link rồi dán vào. Thêm được nhiều page.</p>
+    <label>Link Ad Library của page</label><div style="display:flex;gap:6px"><input id="wzLink" placeholder="https://www.facebook.com/ads/library/?…view_all_page_id=…"><button class="btn" id="wzAdd">＋ Thêm</button></div>
+    <div class="check" id="wzCheck"></div><ul class="plist" id="wzList"></ul>
+    <div class="acts"><button class="btn" id="wzBack">← Quay lại</button><button class="btn pri" id="wzDone">Xong — lưu đối thủ</button></div></div></dialog>
+<dialog id="dlgView"><div class="viewgrid"><div id="viewMedia"></div><div class="viewinfo" id="viewInfo"></div></div></dialog>
+<dialog id="dlgPage"><h3>＋ Thêm page cho <span id="pgApp"></span></h3>
+  <ol><li>Mở <a href="https://www.facebook.com/ads/library/" target="_blank" rel="noopener">facebook.com/ads/library</a>, chọn <b>All</b> + <b>All ads</b>.</li>
+    <li>Gõ tên page/app (đặt trong "ngoặc kép" để tìm đúng cụm).</li>
+    <li>Bấm tên page trên một quảng cáo → copy link trên thanh địa chỉ.</li>
+    <li>Bấm <b>See ad details</b> trên vài quảng cáo, kiểm link có về <b>đúng app</b> (tránh page trùng tên).</li></ol>
+  <label>Link Ad Library của page (hoặc link fanpage / page_id)</label>
+  <input id="pgLink" placeholder="https://www.facebook.com/ads/library/?…view_all_page_id=…">
+  <div class="check" id="pgCheck"></div>
+  <label>Ghi chú (tuỳ chọn)</label><input id="pgNote" placeholder="vd. page chính, thị trường US">
+  <div class="acts"><button class="btn" data-close>Huỷ</button><button class="btn pri" id="pgOk">Thêm page</button></div></dialog>
+<div class="toast" id="toast"></div>
+
+<script>
+let D = {cards:[], apps:[], today:'', since:''};
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dmy = d => d ? d.slice(8,10)+'/'+d.slice(5,7) : '—';
+const addDays = (d, n) => { const t = new Date(d+'T00:00:00Z'); t.setUTCDate(t.getUTCDate()+n); return t.toISOString().slice(0,10); };
+let NEW_FROM = '';
+const AL = id => 'https://www.facebook.com/ads/library/?id='+id;
+let libF = 'all', compF = 'all';
+function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),2600); }
+
+// ---------- filters ----------
+function fillFilters(){
+  const apps = D.apps.filter(a=>a.scanned).map(a=>a.app);
+  $('#fApp').innerHTML = '<option value="">Tất cả app ('+D.apps.length+')</option>' + D.apps.map(a=>`<option>${esc(a.app)}</option>`).join('');
+  $('#fFrom').value = D.since; $('#fTo').value = D.today; fillPages();
+}
+function fillPages(){
+  const app = $('#fApp').value;
+  const pages = D.apps.filter(a=>!app||a.app===app).flatMap(a=>a.pages);
+  $('#fPage').innerHTML = '<option value="">Tất cả page ('+pages.length+')</option>' + pages.map(p=>`<option value="${esc(p.page_id)}">${esc(p.name)}</option>`).join('');
+}
+const inRange = d => d >= $('#fFrom').value && d <= $('#fTo').value;
+
+// ---------- Thư viện ----------
+function libCards(){
+  const app=$('#fApp').value, page=$('#fPage').value;
+  let c = D.cards.filter(x=>(!app||x.app===app)&&(!page||x.page_id===page)&&inRange(x.first_day));
+  if(libF==='new') c=c.filter(x=>x.first_day>=NEW_FROM);
+  if(libF==='run') c=c.filter(x=>x.active);
+  if(libF==='video') c=c.filter(x=>x.kind==='video');
+  if(libF==='anh') c=c.filter(x=>x.kind!=='video');
+  const s=$('#sort').value;
+  c.sort((a,b)=> s==='ads' ? b.n_ads-a.n_ads || b.first_day.localeCompare(a.first_day) : s==='old' ? a.first_day.localeCompare(b.first_day) : b.first_day.localeCompare(a.first_day));
+  return c;
+}
+function kpis(){
+  const app=$('#fApp').value;
+  const days = D.apps.filter(a=>!app||a.app===app).flatMap(a=>a.days);
+  const sum=(from,i)=>days.filter(d=>d[0]>=from&&d[0]<=D.today).reduce((s,d)=>s+d[i],0);
+  const yday = addDays(D.today,-1);
+  const run = D.cards.filter(x=>(!app||x.app===app)&&x.active).length;
+  $('#kpis').innerHTML = `
+    <div class="kpi"><span>Creative mới hôm nay</span><b>${sum(D.today,2)}</b><em>hôm qua: ${days.filter(d=>d[0]===yday).reduce((s,d)=>s+d[2],0)}</em></div>
+    <div class="kpi"><span>Creative mới 7 ngày</span><b>${sum(NEW_FROM,2)}</b><em>14 ngày: ${sum(D.since,2)}</em></div>
+    <div class="kpi"><span>Bộ mới hôm nay</span><b>${sum(D.today,3)}</b><em>hôm qua: ${days.filter(d=>d[0]===yday).reduce((s,d)=>s+d[3],0)}</em></div>
+    <div class="kpi"><span>Bộ mới 7 ngày</span><b>${sum(NEW_FROM,3)}</b><em>14 ngày: ${sum(D.since,3)}</em></div>
+    <div class="kpi"><span>Quảng cáo mới 7 ngày</span><b>${sum(NEW_FROM,1)}</b><em>creative đang chạy: ${run}</em></div>`;
+}
+// chip row shared by the card and the viewer: start day · active state · ads sharing the creative
+const tags = x => `<div class="tags"><span class="t" title="Ngày bắt đầu chạy (Ad Library)">▶ ${dmy(x.first_day)}</span>
+  ${x.active?'<span class="t on" title="Còn ít nhất 1 quảng cáo đang chạy">● Active</span>':'<span class="t off" title="Mọi quảng cáo đã dừng">○ Inactive</span>'}
+  <span class="t" title="Số quảng cáo dùng chung creative này">×${x.n_ads} QC</span></div>`;
+let shown = [], picked = new Set();
+const byKey = k => D.cards.find(c=>c.key===k);
+function selbar(){ $('#selN').textContent = picked.size+' creative đã chọn'; $('#zipBtn').textContent='⬇ Tải '+picked.size+' đã chọn (zip)'; $('#selbar').classList.toggle('on', picked.size>0); }
+function renderLib(){
+  kpis();
+  const c = libCards();
+  $('#libCount').textContent = c.length+' creative';
+  shown = c;
+  $('#feed').innerHTML = c.length ? c.map(x=>`<div class="${picked.has(x.key)?'picked':''}" data-key="${esc(x.key)}">
+    <div class="vid" data-view="${esc(x.key)}" title="Bấm để xem">
+      <input type="checkbox" class="sel" data-pick="${esc(x.key)}" ${picked.has(x.key)?'checked':''} title="Chọn để tải zip">
+      ${x.thumb?`<img src="${x.thumb}" alt="" loading="lazy">`:''}<div class="pl">${x.kind==='video'?'▶':''}</div>
+      ${x.first_day>=NEW_FROM?'<span class="rib new">🆕 Mới</span>':''}
+      <span class="kind">${x.kind==='video'?'🎞 video':'🖼 ảnh'}</span></div>
+    <div class="cap"><b title="${esc(x.app)}">${esc(x.app)}</b><span class="small" title="${esc(x.page_name)}">${esc(x.page_name)}</span>
+      ${tags(x)}
+      <div class="row"><button class="dl" data-dl="${esc(x.key)}">⬇ Tải ${x.kind==='video'?'video':'ảnh'}</button><a href="${AL(x.ad_id)}" target="_blank" rel="noopener">Ad Library ↗</a></div></div></div>`).join('')
+    : `<div class="empty" style="grid-column:1/-1">${D.apps.some(a=>a.scanned)?'Không có creative nào khớp bộ lọc.':'<b>Chưa có dữ liệu.</b>Sang tab 🏢 Đối thủ, thêm app + page rồi bấm ↻ Quét.'}</div>`;
+}
+
+// ---------- Đối thủ ----------
+function spark(days){
+  const d = days.filter(x=>inRange(x[0])), W=300, H=80, n=d.length||1, bw=W/n;
+  const mx = Math.max(1,...d.map(x=>x[2]));
+  const bars = d.map((x,i)=>`<rect x="${i*bw+1}" y="${H-x[2]/mx*(H-12)}" width="${Math.max(1,bw*0.55-1)}" height="${x[2]/mx*(H-12)}" fill="var(--blue)" rx="1"><title>${dmy(x[0])}: ${x[2]} creative · ${x[3]} bộ</title></rect>
+    <rect x="${i*bw+bw*0.55}" y="${H-x[3]/mx*(H-12)}" width="${Math.max(1,bw*0.3)}" height="${x[3]/mx*(H-12)}" fill="var(--green)" rx="1"></rect>`).join('');
+  const lab = d.length?`<text x="0" y="${H+10}">${dmy(d[0][0])}</text><text x="${W}" y="${H+10}" text-anchor="end">${dmy(d[d.length-1][0])}</text>`:'';
+  return `<svg viewBox="0 -2 ${W} ${H+14}" preserveAspectRatio="none" style="font-size:10px;fill:var(--mute)">${bars}<line x1="0" x2="${W}" y1="${H}" y2="${H}" stroke="var(--line)"/>${lab}</svg>`;
+}
+function cov(s){
+  if(!s) return '<span class="tag">chưa quét</span>';
+  const c=s.coverage, capped=(s.warnings||[]).some(w=>w.includes('Chạm trần'));
+  const t = c==null ? `không biết tổng (thu ${s.collected})` : `${Math.round(c*100)}% <span class="small">(${s.collected}/${s.shown_total})</span>`;
+  return (capped||(c!=null&&c<0.98)) ? `<span class="tag warn">⚠ ${t}</span>` : `<span class="tag ok">${t}</span>`;
+}
+const when = s => s ? new Date(s.at).toLocaleString('vi-VN',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'}) : '—';
+function renderComp(){
+  const app=$('#fApp').value;
+  let apps = D.apps.filter(a=>!app||a.app===app);
+  if(compF==='done') apps=apps.filter(a=>a.scanned); if(compF==='todo') apps=apps.filter(a=>!a.scanned);
+  const np = D.apps.reduce((s,a)=>s+a.pages.length,0);
+  $('#compTitle').textContent = `Đối thủ đang theo dõi · ${D.apps.length} app · ${np} page · ${D.apps.filter(a=>a.scanned).length} app đã quét`;
+  $('#apps').innerHTML = apps.map((a,ai)=>{
+    const d=a.days.filter(x=>inRange(x[0])), cr=d.reduce((s,x)=>s+x[2],0), st=d.reduce((s,x)=>s+x[3],0), qc=d.reduce((s,x)=>s+x[1],0);
+    const rows = a.pages.map(p=>`<tr><td class="pg"><a href="${esc(p.link)}" target="_blank" rel="noopener" title="${esc(p.name)} — mở trên Ad Library">${esc(p.name)}</a><span class="small">${esc(p.page_id)}</span></td>
+      <td>${esc(p.owner||(p.scan?'Meta không công khai':'—'))}${p.category?`<div class="small">${esc(p.category)}</div>`:''}</td>
+      <td>${p.new_creatives??'—'}</td><td>${cov(p.scan)}</td><td class="small">${when(p.scan)}</td></tr>`).join('');
+    return `<div class="panel appcard ${a.scanned?'':'unscanned'}">
+      <div class="apphead"><h3>${esc(a.app)}</h3>${a.store?`<a class="store" href="${esc(a.store)}" target="_blank" rel="noopener">${esc(a.store.replace(/^https?:\/\//,''))}</a>`:''}<span class="sp"></span>
+        ${a.scanned?`<span class="sum">${qc} QC · <b style="color:var(--blue)">${cr} creative</b> · <b style="color:var(--green)">${st} bộ</b> mới</span>`:'<span class="tag">chưa quét</span>'}
+        <button class="btn" data-addpage="${esc(a.app)}">＋ Thêm page</button><button class="btn" data-scan="${esc(a.app)}">↻ Quét</button></div>
+      <div class="appbody"><div style="overflow-x:auto"><table><thead><tr><th>Page (bấm để mở Ad Library)</th><th>Chủ page</th><th>Creative mới</th><th>Độ phủ</th><th>Quét lúc</th></tr></thead><tbody>${rows}</tbody></table></div>
+        ${a.scanned?`<div class="mini"><h4>Creative mới / bộ mới theo ngày</h4>${spark(a.days)}<div class="legend"><span><i style="background:var(--blue)"></i>creative mới</span><span><i style="background:var(--green)"></i>bộ mới</span></div></div>`:''}</div></div>`;
+  }).join('') || '<div class="panel empty">Không có app nào.</div>';
+}
+
+// ---------- wiring ----------
+function render(){ renderLib(); renderComp();
+  const scanned = D.apps.flatMap(a=>a.pages).filter(p=>p.scan);
+  const last = scanned.map(p=>p.scan.at).sort().pop();
+  $('#fresh').textContent = `Ad Library · quét lúc ${when({at:last})} · ${scanned.length} page · ${D.apps.filter(a=>a.scanned).length}/${D.apps.length} app`;
+}
+$$('#tabs a').forEach(a=>a.onclick=()=>{ $$('#tabs a').forEach(x=>x.classList.toggle('on',x===a)); $$('.v').forEach(v=>v.classList.toggle('on',v.id==='v-'+a.dataset.v)); });
+$$('#libChips .chip[data-f]').forEach(b=>b.onclick=()=>{ libF=b.dataset.f; $$('#libChips .chip[data-f]').forEach(x=>x.classList.toggle('on',x===b)); renderLib(); });
+$$('#compChips .chip').forEach(b=>b.onclick=()=>{ compF=b.dataset.c; $$('#compChips .chip').forEach(x=>x.classList.toggle('on',x===b)); renderComp(); });
+$('#fApp').onchange=()=>{ fillPages(); render(); }; ['#fPage','#fFrom','#fTo','#sort'].forEach(s=>$(s).onchange=render);
+$('#scanAll').onclick=()=>startScan(null);
+$$('dialog [data-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
+document.addEventListener('click',e=>{
+  const ap=e.target.closest('[data-addpage]'); if(ap){ $('#pgApp').textContent=ap.dataset.addpage; $('#dlgPage').dataset.app=ap.dataset.addpage; $('#pgLink').value=''; $('#pgCheck').textContent=''; $('#dlgPage').showModal(); }
+  const sc=e.target.closest('[data-scan]'); if(sc) startScan(sc.dataset.scan);
+});
+function pageIdOf(v){ v=v.trim(); if(/^\d{5,}$/.test(v)) return v; const m=v.match(/[?&]view_all_page_id=(\d+)/); return m?m[1]:null; }
+function checkLink(v,c){ const id=pageIdOf(v);
+  if(!v.trim()){c.textContent='';return;}
+  if(id){c.className='check ok';c.textContent='✓ Nhận ra page_id '+id;}
+  else if(/facebook\.com\//.test(v)){c.className='check ok';c.textContent='✓ Link fanpage — tool sẽ tự đổi ra page_id khi quét';}
+  else {c.className='check bad';c.textContent='✗ Chưa phải link Ad Library / fanpage / page_id';} }
+$('#pgLink').oninput=()=>checkLink($('#pgLink').value,$('#pgCheck'));
+$('#pgOk').onclick=async()=>{ const v=$('#pgLink').value.trim(); if(!v) return $('#pgLink').focus();
+  try{ const r=await api('/api/pages',{app:$('#dlgPage').dataset.app,link:v,note:$('#pgNote').value});
+    $('#dlgPage').close(); $('#pgNote').value=''; await load();
+    toast(r.status==='đã có'?'Page này đã có trong app':'Đã thêm page vào doi_thu.csv — bấm ↻ Quét để lấy số'); }catch(e){ toast('Lỗi: '+e.message); } };
+// ---------- xem + tải ----------
+function openView(k){ const x=byKey(k);
+  $('#viewMedia').innerHTML = x.kind==='video' && x.video ? `<video src="${esc(x.video)}" poster="${x.thumb||''}" controls autoplay playsinline></video>` : `<img src="/api/media/${esc(x.ad_id)}" alt="">`;
+  $('#viewInfo').innerHTML = `<h3>${esc(x.app)}</h3><div class="small">${esc(x.page_name)}</div>${tags(x)}
+    <dl><dt>Định dạng</dt><dd>${esc(x.fmt||x.kind)}</dd><dt>Đích</dt><dd>${esc(x.dest||'—')}</dd><dt>Tên file</dt><dd><code>${esc(x.file)}</code></dd></dl>
+    <p>${esc(x.text)}</p><div class="row"><button class="btn pri" data-dl="${esc(x.key)}">⬇ Tải ${x.kind==='video'?'video':'ảnh'}</button>
+    <a class="btn" href="${AL(x.ad_id)}" target="_blank" rel="noopener">Mở trên Ad Library ↗</a><button class="btn" data-close>Đóng</button></div>`;
+  $('#dlgView').showModal(); }
+$('#dlgView').addEventListener('close',()=>{ $('#viewMedia').innerHTML=''; });
+$('#dlgView').addEventListener('click',e=>{ if(e.target.closest('[data-close]')) $('#dlgView').close(); });
+function save(blob,name){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000); }
+async function errText(r){ try{ return (await r.json()).error||('HTTP '+r.status); }catch(e){ return 'HTTP '+r.status; } }
+async function dlOne(k){ const x=byKey(k); toast('Đang tải '+x.file+' … (link hết hạn thì tool tự quét lại page, có thể mất 1–2 phút)');
+  try{ const r=await fetch('/api/download/'+x.ad_id); if(!r.ok) throw new Error(await errText(r));
+    const b=await r.blob(); save(b,x.file); toast('Đã tải '+x.file+' ('+(b.size/1e6).toFixed(1)+' MB)'); }catch(e){ toast('Tải lỗi: '+e.message); } }
+async function dlZip(){ const list=[...picked].map(byKey).filter(Boolean); if(!list.length) return;
+  const btn=$('#zipBtn'); btn.disabled=true; toast(`Đang tải và nén ${list.length} file …`);
+  try{ const r=await fetch('/api/zip',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids:list.map(x=>x.ad_id)})});
+    if(!r.ok) throw new Error(await errText(r));
+    const fail=(r.headers.get('X-Failed')||'').split(',').filter(Boolean).length, z=await r.blob();
+    save(z,`creative-tracker_${D.today}_${list.length-fail}-creative.zip`);
+    toast(`Đã nén ${list.length-fail} file (${(z.size/1e6).toFixed(1)} MB)`+(fail?` · ${fail} lỗi`:''));
+  }catch(e){ toast('Nén lỗi: '+e.message); } finally{ btn.disabled=false; } }
+document.addEventListener('click',e=>{
+  const pk=e.target.closest('[data-pick]'); if(pk){ e.stopPropagation(); pk.checked?picked.add(pk.dataset.pick):picked.delete(pk.dataset.pick); pk.closest('[data-key]').classList.toggle('picked',pk.checked); selbar(); return; }
+  const dl=e.target.closest('[data-dl]'); if(dl){ dlOne(dl.dataset.dl); return; }
+  const vw=e.target.closest('[data-view]'); if(vw){ openView(vw.dataset.view); }
+});
+$('#zipBtn').onclick=dlZip; $('#selClear').onclick=()=>{ picked.clear(); renderLib(); selbar(); };
+$('#selAll').onclick=()=>{ shown.forEach(x=>picked.add(x.key)); renderLib(); selbar(); };
+// ---------- thêm đối thủ (2 bước) ----------
+let wzPages=[];
+$('#addComp').onclick=()=>{ wzPages=[]; $('#appName').value=''; $('#appStore').value=''; $('#wzList').innerHTML=''; $('#wz1').hidden=false; $('#wz2').hidden=true;
+  $('#st1').innerHTML='<b>① App</b>'; $('#st2').textContent='② Page trên Ad Library'; $('#dlgWiz').showModal(); };
+$('#wzNext').onclick=()=>{ if(!$('#appName').value.trim()) return $('#appName').focus(); $('#wz1').hidden=true; $('#wz2').hidden=false;
+  $('#st1').textContent='① '+$('#appName').value.trim(); $('#st2').innerHTML='<b>② Page trên Ad Library</b>'; $('#wzLink').focus(); };
+$('#wzBack').onclick=()=>{ $('#wz1').hidden=false; $('#wz2').hidden=true; };
+$('#wzLink').oninput=()=>checkLink($('#wzLink').value,$('#wzCheck'));
+$('#wzAdd').onclick=()=>{ const v=$('#wzLink').value.trim(), id=pageIdOf(v); if(!v) return;
+  if(wzPages.some(p=>p.link===v)) return;
+  wzPages.push({page_id:id||'?',name:id?'page '+id:v,link:v});
+  $('#wzList').innerHTML=wzPages.map(p=>`<li><span>${esc(p.name)}</span><span class="small">chưa quét</span></li>`).join(''); $('#wzLink').value=''; $('#wzCheck').textContent=''; };
+$('#wzDone').onclick=async()=>{ const n=$('#appName').value.trim(); if($('#wzLink').value.trim()) $('#wzAdd').click();
+  try{ await api('/api/apps',{name:n,link_store:$('#appStore').value.trim()});
+    for(const p of wzPages) await api('/api/pages',{app:n,link:p.link,note:''});
+    $('#dlgWiz').close(); compF='all'; $$('#compChips .chip').forEach(x=>x.classList.toggle('on',x.dataset.c==='all')); await load();
+    toast(`Đã lưu "${n}" với ${wzPages.length} page vào doi_thu.csv — bấm ↻ Quét`); }catch(e){ toast('Lỗi: '+e.message); } };
+['hw1','hw2','hw3'].forEach((id,i)=>$('#'+id).src='/static/howto-'+(i+1)+'.png');
+async function api(path,body){ const r=await fetch(path, body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{});
+  const j=await r.json().catch(()=>({})); if(!r.ok && r.status!==409) throw new Error(j.error||('HTTP '+r.status)); return j; }
+async function load(){ const [lib,comp]=await Promise.all([api('/api/library'),api('/api/competitors')]);
+  const keepApp=$('#fApp').value, keepPage=$('#fPage').value, keepFrom=$('#fFrom').value, keepTo=$('#fTo').value;
+  D={cards:lib.cards, apps:comp.apps, today:lib.today, since:lib.since}; NEW_FROM=addDays(D.today,-6);
+  const valid = new Set(D.cards.map(c=>c.key)); picked.forEach(k=>{ if(!valid.has(k)) picked.delete(k); }); selbar();
+  fillFilters(); if(keepApp && D.apps.some(a=>a.app===keepApp)){ $('#fApp').value=keepApp; fillPages(); $('#fPage').value=keepPage; }
+  if(keepFrom){ $('#fFrom').value=keepFrom; $('#fTo').value=keepTo; } render(); }
+let polling=null;
+function showScan(st){ const busy=st.running; $('#fresh').classList.toggle('busy',busy);
+  if(busy) $('#fresh').textContent=`⏳ Đang quét: ${st.target} · ${(st.log||[]).slice(-1)[0]||'đang mở Ad Library…'}`.slice(0,120);
+  $$('[data-scan],#scanAll').forEach(b=>b.disabled=busy); }
+async function poll(){ const st=await api('/api/scan'); showScan(st);
+  if(!st.running){ clearInterval(polling); polling=null; await load(); toast(st.rc===0?'Quét xong — số đã cập nhật':'Quét xong nhưng có lỗi — xem log terminal chạy ctal web'); } }
+async function startScan(app){ const st=await api('/api/scan',{app:app||null});
+  if(!st.started) return toast('Đang có một lượt quét chạy — chờ xong rồi bấm lại');
+  toast('Bắt đầu quét '+(app||'tất cả')+' — mỗi page ~10 giây tới vài phút'); showScan(st); if(!polling) polling=setInterval(poll,2000); }
+api('/api/scan').then(st=>{ if(st.running){ showScan(st); polling=setInterval(poll,2000); } });
+load().catch(e=>toast('Không đọc được dữ liệu: '+e.message));
+</script></body></html>

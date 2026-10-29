@@ -37,7 +37,11 @@ CREATE INDEX IF NOT EXISTS ads_page_day ON ads(page_id, start_day);
 """
 
 AD_COLS = ["ad_archive_id", "page_id", "page_name", "start_day", "end_day", "is_active", "collation_id",
-           "collation_count", "display_format", "link_url", "destination", "body"]
+           "collation_count", "display_format", "link_url", "destination", "body",
+           "kind", "thumb_url", "video_url", "video_sd_url", "image_url", "title", "cta_text"]
+# Columns added after the first release: created on older databases at connect time.
+LATER_COLS = {"kind": "TEXT", "thumb_url": "TEXT", "video_url": "TEXT", "video_sd_url": "TEXT",
+              "image_url": "TEXT", "title": "TEXT", "cta_text": "TEXT"}
 
 
 def now_iso() -> str:
@@ -49,6 +53,11 @@ def connect(path: str | Path) -> sqlite3.Connection:
     con = sqlite3.connect(path)
     con.row_factory = sqlite3.Row
     con.executescript(SCHEMA)
+    have = {r[1] for r in con.execute("PRAGMA table_info(ads)")}
+    for col, typ in LATER_COLS.items():
+        if col not in have:
+            con.execute(f"ALTER TABLE ads ADD COLUMN {col} {typ}")
+    con.commit()
     return con
 
 
@@ -91,7 +100,19 @@ def load_page(con: sqlite3.Connection, page_id: str) -> tuple[PageInfo, dict | N
 
 def load_ads(con: sqlite3.Connection, page_id: str) -> list[Ad]:
     rows = con.execute(f"SELECT {','.join(AD_COLS)} FROM ads WHERE page_id=?", (page_id,)).fetchall()
-    return [Ad(**{c: (bool(r[c]) if c == "is_active" else r[c]) for c in AD_COLS}) for r in rows]
+    ads = [Ad(**{c: (bool(r[c]) if c == "is_active" else r[c]) for c in AD_COLS}) for r in rows]
+    for a in ads:
+        a.kind = a.kind or "video"
+    return ads
+
+
+def load_ad(con: sqlite3.Connection, ad_archive_id: str) -> Ad | None:
+    r = con.execute(f"SELECT {','.join(AD_COLS)} FROM ads WHERE ad_archive_id=?", (ad_archive_id,)).fetchone()
+    if not r:
+        return None
+    ad = Ad(**{c: (bool(r[c]) if c == "is_active" else r[c]) for c in AD_COLS})
+    ad.kind = ad.kind or "video"
+    return ad
 
 
 def page_id_for_input(con: sqlite3.Connection, user_input: str) -> str | None:

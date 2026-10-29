@@ -27,7 +27,53 @@ Kiểm cài xong: `ctal --help`.
 
 > Mở terminal mới thì chạy lại `cd creative-tracker-adlibrary && source .venv/bin/activate` trước khi dùng `ctal`.
 
-## Thêm đối thủ
+## Mở giao diện web (cách dùng chính)
+
+```bash
+ctal web
+```
+
+Trình duyệt tự mở **http://127.0.0.1:8770**. Trang chỉ chạy trên máy bạn: chỉ nghe ở 127.0.0.1, không có tài khoản, không có domain. Tắt bằng `Ctrl+C` trong terminal. Cổng bận thì chạy `ctal web --port 8771`.
+
+Lần đầu mở, danh sách đối thủ có sẵn 3 app mẫu (4 page nhỏ). Sang tab **🏢 Đối thủ**, bấm **↻ Quét tất cả** (khoảng 3 phút) để có dữ liệu.
+
+### 🎬 Thư viện
+
+![Tab Thư viện](docs/images/web-thu-vien.jpg)
+
+- Đầu trang: số **creative mới / bộ mới** hôm nay và 7 ngày, quảng cáo mới 7 ngày.
+- Lọc theo app, page, khoảng ngày. Chip lọc: Mới (7 ngày) · Đang chạy · Video · Ảnh. Sắp xếp: mới nhất / nhiều quảng cáo dùng chung nhất / cũ nhất.
+- Mỗi thẻ là **một creative**. Hàng chip gồm: **▶ ngày bắt đầu chạy** · **● Active** (còn quảng cáo đang chạy) / **○ Inactive** · **×N QC** (số quảng cáo dùng chung creative).
+- **Bấm vào ảnh** để mở hộp xem: phát video, kèm nội dung quảng cáo và link đích.
+
+![Hộp xem video](docs/images/web-xem-video.jpg)
+
+- **⬇ Tải video**: tải 1 file, tên dạng `app_page_ngày-bắt-đầu_id.mp4`.
+- **Tải nhiều:** tick ô ở góc thẻ (hoặc chip **☑ Chọn hết trang này**), rồi bấm **⬇ Tải N đã chọn (zip)** ở đáy trang.
+- **Ad Library ↗**: mở đúng quảng cáo trên Meta Ad Library.
+
+![Chọn nhiều rồi tải zip](docs/images/web-chon-tai-zip.jpg)
+
+### 🏢 Đối thủ
+
+![Tab Đối thủ](docs/images/web-doi-thu.jpg)
+
+- Mỗi app là một thẻ: link store, các page (bấm tên page để mở trên Ad Library), chủ page, creative mới, độ phủ, giờ quét, và biểu đồ nhỏ creative mới / bộ mới theo ngày.
+- **＋ Thêm đối thủ**: bước ① tên app + link store → bước ② dán link Ad Library của từng page (thêm được nhiều page). Ghi thẳng vào `doi_thu.csv`.
+- **＋ Thêm page** trên thẻ app: thêm page cho app đã có.
+- **↻ Quét** trên thẻ app (hoặc **↻ Quét tất cả** ở góc trên): quét chạy nền, góc trên hiện "⏳ Đang quét …"; quét xong số tự cập nhật. Mỗi lúc chỉ chạy một lượt quét.
+- Khung **📌 Cách thêm đối thủ** ở đầu tab hướng dẫn 3 bước tự tìm page trên Ad Library (thu gọn được).
+
+![Thêm đối thủ 2 bước](docs/images/web-them-doi-thu.jpg)
+
+**Ảnh và video được lưu thế nào:** link ảnh/video của Facebook có chữ ký và **hết hạn sau khoảng 4,5 ngày** (đo 104–108 giờ).
+- **Ảnh xem trước** được tải về máy ngay lúc quét (`data/thumbs/`, ~23 KB/ảnh), nên thư viện không mất ảnh.
+- **Video không tải sẵn**: 1 video HD trung bình ~5,4 MB, 1.000 creative sẽ là ~5 GB. Bấm tải mới tải.
+- Link đã hết hạn thì tool **tự quét lại page đó** để lấy link mới rồi tải. Việc này mất thêm 10 giây tới vài phút tuỳ cỡ page.
+
+Mọi thao tác trên web đều có lệnh tương ứng ở terminal (mục dưới), dùng chung dữ liệu.
+
+## Thêm đối thủ bằng lệnh (terminal)
 
 Cấu trúc: **app đối thủ → các page của app đó**. Danh sách nằm trong một file `doi_thu.csv` (mở được bằng Excel/Numbers), 4 cột: `app, link_store, link_ad_library, ghi_chu`. Mỗi page một dòng. Lần chạy đầu, tool tạo `doi_thu.csv` từ danh sách mẫu `doi_thu.mau.csv` (3 app, 4 page nhỏ, quét thử ~2–3 phút); bạn sửa hoặc xoá tuỳ ý.
 
@@ -61,7 +107,7 @@ Ngoài link Ad Library, lệnh này cũng nhận link fanpage (`https://www.face
 
 **4. Xem danh sách:** `ctal list`
 
-## Quét
+## Quét bằng lệnh (terminal)
 
 ```bash
 ctal scan                          # quét mọi page trong doi_thu.csv rồi xuất báo cáo tổng hợp
@@ -143,6 +189,7 @@ Tool tự đổi link fanpage ra page_id. Nếu không được (page giới h�
 - **Mép cửa sổ:** một creative có quảng cáo cũ đã ngừng hiển thị trước cửa sổ, và chỉ quảng cáo mới của nó nằm trong cửa sổ, thì có thể bị đếm là creative mới. Quét hằng ngày sẽ giảm sai số này.
 - **Page dẫn qua trang web trung gian** (link quiz/landing thay vì link store) khó nhận ra khi tự tìm page. Danh sách có sẵn có thể sót những page như vậy; bạn tự thêm bằng `ctal page add`.
 - **Một page có thể quảng cáo cho nhiều app.** Số của page (và tổng app) tính **mọi** quảng cáo của page. Cột **"Trỏ đúng app x/y"** trong `tong-hop.html` cho biết bao nhiêu quảng cáo trong kỳ có link về đúng store của app; tỉ lệ thấp nghĩa là page dùng chung hoặc dẫn qua web.
+- **Link video hết hạn ~4,5 ngày sau lượt quét.** Bấm tải khi link đã hết hạn thì tool quét lại page để lấy link mới. Quảng cáo đã rơi khỏi khoảng 14 ngày (không còn hiển thị) có thể không lấy lại được link; khi đó nút tải báo lỗi.
 - "Creative" là cách Meta tự gom nội dung; tool không tự so sánh ảnh/video. "Bộ" là cách tính xấp xỉ theo ngày + đích.
 - Ad Library là trang web, không phải API: Meta đổi giao diện thì tool có thể hỏng. Dấu hiệu là thu 0 quảng cáo trong khi web vẫn hiện.
 - Tool cố ý đi chậm (nghỉ 2–3,5 giây mỗi lần cuộn, 8–15 giây giữa các page), không đăng nhập và không vượt rào. Gặp màn hình đòi đăng nhập thì tool dừng.
@@ -165,4 +212,9 @@ Test dùng response thật của Ad Library chụp ngày 29/10/2026 (`tests/fixt
 | `src/ctal/report_outputs.py` | bảng terminal, CSV, HTML |
 | `src/ctal/competitor_list.py` | danh sách đối thủ `doi_thu.csv` (app → page) |
 | `src/ctal/app_summary_report.py` | báo cáo tổng hợp theo app |
-| `src/ctal/cli.py` | lệnh `ctal app/page/list/scan/report` |
+| `src/ctal/cli.py` | lệnh `ctal app/page/list/scan/report/web` |
+| `src/ctal/web_server.py` · `web/index.html` | giao diện web local (thư viện chuẩn Python, 127.0.0.1) |
+| `src/ctal/web_data.py` | dữ liệu 2 tab Thư viện / Đối thủ |
+| `src/ctal/scan_jobs.py` | chạy `ctal scan` nền từ nút Quét, có trạng thái |
+| `src/ctal/media_download.py` | tải video/ảnh, zip, tự làm mới link hết hạn |
+| `src/ctal/thumbnails.py` · `ad_media_fields.py` | lưu ảnh xem trước; đọc link ảnh/video trong JSON |

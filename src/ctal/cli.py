@@ -22,11 +22,17 @@ from pathlib import Path
 
 from ctal import competitor_list as cl
 from ctal import storage
+from ctal.thumbnails import save_thumbnails
 from ctal.daily_counts import daily_rows, sets_detail
 from ctal.app_summary_report import points_to_app, write_app_summary_csv, write_app_summary_html
 from ctal.report_outputs import terminal_table, write_daily_csv, write_html, write_sets_csv
 
 DB = Path("data/tracker.db")
+
+
+def thumbs_dir(db: Path) -> Path:
+    """Preview pictures live next to the database: data/thumbs/<ad_archive_id>.jpg."""
+    return Path(db).parent / "thumbs"
 OUT = Path("out")
 
 
@@ -126,6 +132,7 @@ def cmd_scan(args) -> int:
             continue
         done.add(res.page_id)
         ins, upd = storage.upsert_ads(con, res.ads)
+        th = save_thumbnails(res.ads, thumbs_dir(args.db))
         meta = {"at": storage.now_iso(), "since": res.since, "collected": len(res.ads),
                 "shown_total": res.shown_total, "coverage": res.coverage, "scrolls": res.scrolls,
                 "seconds": round(res.seconds), "warnings": res.warnings}
@@ -134,6 +141,8 @@ def cmd_scan(args) -> int:
         print(f"  page_id {res.page_id} · {res.info.page_name} · chủ page: {res.info.owner or 'không rõ'}")
         print(f"  thu {len(res.ads)}/{res.shown_total} quảng cáo (độ phủ {cov}) · mới {ins}, cập nhật {upd} · "
               f"{res.scrolls} lần cuộn · {res.seconds:.0f}s")
+        print(f"  ảnh xem trước: lưu mới {th.saved}, đã có {th.already}"
+              + (f", lỗi {th.failed}" if th.failed else "") + (f", không có link {th.no_link}" if th.no_link else ""))
         for w in res.warnings:
             print(f"  ⚠ {w}")
         if not args.no_report and args.pages:
@@ -209,6 +218,29 @@ def cmd_report(args) -> int:
     return 0
 
 
+def cmd_web(args) -> int:
+    import webbrowser
+    from ctal.web_server import App, make_server
+
+    try:
+        server = make_server(App(args.db, args.list, args.out, args.days), args.port)
+    except OSError as exc:
+        print(f"Cổng {args.port} đang bận ({exc.strerror}). Có thể `ctal web` đang chạy ở cửa sổ khác — "
+              f"mở http://127.0.0.1:{args.port} hoặc chạy lại với --port <số khác>.", file=sys.stderr)
+        return 1
+    url = f"http://127.0.0.1:{args.port}"
+    print(f"Creative Tracker đang chạy: {url}   (Ctrl+C để tắt)")
+    if not args.no_open:
+        webbrowser.open(url)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\nĐã tắt.")
+    finally:
+        server.server_close()
+    return 0
+
+
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(prog="ctal", description="Creative Tracker từ Meta Ad Library (bản cơ bản).")
     p.add_argument("--db", type=Path, default=DB)
@@ -245,6 +277,12 @@ def main(argv=None) -> int:
     r.add_argument("pages", nargs="*", help="page_id; bỏ trống = báo cáo tổng hợp theo app")
     r.add_argument("--days", type=int, default=14)
     r.set_defaults(func=cmd_report)
+
+    w = sub.add_parser("web", help="Mở giao diện web trên máy (http://127.0.0.1:8770)")
+    w.add_argument("--port", type=int, default=8770)
+    w.add_argument("--days", type=int, default=14, help="số ngày gần nhất hiển thị (mặc định 14)")
+    w.add_argument("--no-open", action="store_true", help="không tự mở trình duyệt")
+    w.set_defaults(func=cmd_web)
 
     args = p.parse_args(argv)
     logging.basicConfig(level=logging.INFO if args.verbose else logging.WARNING, format="%(message)s")
