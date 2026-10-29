@@ -4,6 +4,18 @@ Làm **một lần** trên máy Mac, mất khoảng **10–20 phút** (phần l�
 
 > Cài xong rồi? Xem **[Hướng dẫn sử dụng](HUONG-DAN-SU-DUNG.md)**.
 
+## Trước tiên — máy của bạn loại nào?
+
+Bấm menu **** (góc trên trái) → **Giới thiệu về máy Mac này** (About This Mac):
+
+| Dòng **Chip** / **Bộ xử lý** (Processor) | Loại máy | Làm |
+|---|---|---|
+| `Apple M1`, `M2`, `M3`… | chip Apple | làm đủ các bước dưới |
+| `Intel Core i5`, `i7`… (Mac đời 2019 trở về trước) | chip Intel | **bỏ qua Bước 2** (không cần Homebrew); script tự tải Python ở Bước 5 |
+
+Dòng **macOS** phải từ **14 (Sonoma)** trở lên — trình duyệt ẩn mà tool dùng không có bản cho macOS cũ hơn.
+Máy đang ở 13 (Ventura) hoặc cũ hơn: menu  → **Cài đặt hệ thống** → **Cài đặt chung** → **Cập nhật phần mềm**, cập nhật lên Sonoma 14 hoặc mới hơn trước (Mac Intel đời 2018–2019 đều lên được). Cập nhật có thể mất 1 giờ.
+
 ---
 
 ## Bước 1 — Mở Terminal
@@ -17,6 +29,8 @@ Terminal là ô gõ lệnh có sẵn trên mọi máy Mac.
 **Cách dán một lệnh:** copy lệnh trong khung xám → bấm vào cửa sổ Terminal → **⌘ Command + V** → **Enter**.
 
 ## Bước 2 — Cài Homebrew (trình cài phần mềm cho Mac)
+
+> **Máy Intel: bỏ qua bước này, sang Bước 3.** Homebrew đã ngừng hỗ trợ Mac Intel (không còn bản dựng sẵn, mọi thứ phải tự biên dịch rất lâu); tool không cần nó trên máy Intel.
 
 Kiểm xem máy đã có chưa:
 ```bash
@@ -50,7 +64,7 @@ Chọn **một** trong hai cách.
    ```
    Không in gì là đúng.
 
-### Cách B — Dùng git (để cập nhật bản mới dễ hơn)
+### Cách B — Dùng git (để cập nhật bản mới dễ hơn; cần Homebrew ⇒ máy Intel dùng Cách A)
 ```bash
 brew install gh
 gh auth login
@@ -98,6 +112,22 @@ Script tự làm hết: kiểm máy Mac, kiểm Homebrew, cài **Python** nếu 
 ✓ Cài xong. Mở tool: nhấp đúp file mo-tool.command trong thư mục này
 ```
 
+**Máy Intel — lần chạy đầu khác ở Bước 3/5:** chưa có Python thì script tự tải bộ cài chính thức **Python 3.13** (~70 MB, từ python.org) về thư mục Downloads và mở nó ra. Bấm **Continue** → **Continue** → **Agree** → **Install**, nhập mật khẩu máy, chờ chữ *The installation was completed*, bấm **Close**. Sau đó **đóng Terminal, mở lại** (Bước 1 và Bước 4) và chạy lại `bash cai-dat.sh`. Lần này sẽ ra:
+
+```
+1/5  Máy Mac
+  ✓ macOS 14.x (chip Intel)
+2/5  Homebrew (trình cài phần mềm)
+  ✓ Máy Intel: không cần Homebrew (Homebrew đã ngừng hỗ trợ Mac Intel; Python lấy từ python.org)
+3/5  Python 3.11 trở lên
+  ✓ Python 3.13.x (/usr/local/bin/python3.13)
+…
+```
+
+Nếu script báo thiếu chứng chỉ HTTPS, nó tự chạy `Install Certificates.command` của Python; vẫn báo thì làm như bảng lỗi bên dưới.
+
+**Máy Intel (ví dụ MacBook 2019 i5) chậm hơn bao nhiêu?** *Ước tính, chưa đo trên máy Intel thật:* cài lâu hơn vài phút (chủ yếu là tải Python + trình duyệt ẩn, phụ thuộc mạng). Lúc dùng, việc quét chủ yếu là **chờ Facebook trả dữ liệu** nên chậm hơn không đáng kể — trên máy chip Apple, quét 5 page nhỏ mất ~4 phút; máy i5 có thể chậm hơn khoảng 1,5 lần ở phần mở trình duyệt và lướt trang.
+
 Có dòng **✗** thì làm đúng việc ghi trên dòng đó, rồi chạy lại `bash cai-dat.sh`. Chạy lại bao nhiêu lần cũng không sao.
 
 ## Bước 6 — Mở tool
@@ -132,10 +162,13 @@ Dữ liệu của bạn chỉ nằm trên máy: `data/` (ảnh, cơ sở dữ li
 
 | Thấy | Làm |
 |---|---|
-| `command not found: brew` | Chưa cài Homebrew, hoặc chưa chạy 2–3 dòng **Next steps** của Homebrew. Làm lại Bước 2, rồi **đóng và mở lại Terminal**. |
+| `command not found: brew` | Máy **Intel**: bình thường, không cần Homebrew — chạy thẳng `bash cai-dat.sh`. Máy **chip Apple**: chưa cài Homebrew, hoặc chưa chạy 2–3 dòng **Next steps** của Homebrew. Làm lại Bước 2, rồi **đóng và mở lại Terminal**. Đã cài mà vẫn báo: dán `eval "$(/opt/homebrew/bin/brew shellenv)"`. |
+| `✗ macOS 13.x … quá cũ — tool cần macOS 14 Sonoma trở lên` | Cập nhật macOS (xem mục *Trước tiên* ở đầu trang), rồi chạy lại `bash cai-dat.sh`. |
+| `✗ Bộ cài Python vừa mở ra…` (máy Intel) | Làm hết bộ cài Python (Install, nhập mật khẩu máy), **đóng–mở lại Terminal**, chạy lại `bash cai-dat.sh`. Lỡ đóng bộ cài: mở thư mục **Downloads**, nhấp đúp `python-3.13.17-macos11.pkg`. |
+| `✗ Python chưa có chứng chỉ HTTPS` / lúc dùng báo `CERTIFICATE_VERIFY_FAILED` | Finder → **Applications** → thư mục **Python 3.13** → nhấp đúp **Install Certificates.command**, chờ chữ `update complete`, rồi chạy lại `bash cai-dat.sh`. |
 | `zsh: command not found: ctal` | Bạn gõ `ctal` trực tiếp. Hãy dùng `./mo-tool.command`, hoặc `.venv/bin/ctal …` trong thư mục tool. |
 | `bash: cai-dat.sh: No such file or directory` | Terminal chưa đứng trong thư mục tool. Làm lại Bước 4 (gõ `cd ` rồi kéo thả thư mục vào). |
-| `✗ Chưa có Python 3.11+…` / cài Python lỗi | Chạy `brew install python@3.12`, đóng–mở lại Terminal, chạy lại `bash cai-dat.sh`. |
+| `✗ Chưa có Python 3.11+…` / cài Python lỗi (máy chip Apple) | Chạy `brew install python@3.12`, đóng–mở lại Terminal, chạy lại `bash cai-dat.sh`. |
 | Python sai bản (script báo Python quá cũ) | Python có sẵn của macOS là bản cũ 3.9, tool không dùng được. Script tự cài bản mới qua Homebrew; gặp lỗi thì làm như dòng trên. |
 | `✗ Tải trình duyệt không được` / trang báo lỗi `Executable doesn't exist … playwright install` | Mạng bị ngắt lúc tải. Chạy lại `bash cai-dat.sh`. |
 | Nhấp đúp `mo-tool.command` bị chặn ("nhà phát triển không xác định") | Chuột phải → Open → Open (xem Bước 6). |

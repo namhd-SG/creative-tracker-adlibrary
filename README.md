@@ -16,7 +16,7 @@ Dữ liệu lấy từ trang công khai [Meta Ad Library](https://www.facebook.c
 
 **Cách nhanh:** trong thư mục tool chạy `bash cai-dat.sh`, rồi nhấp đúp `mo-tool.command`. Chi tiết từng bước cho người không biết code: [HUONG-DAN-CAI-DAT.md](HUONG-DAN-CAI-DAT.md). Cách thủ công:
 
-Cần **Python 3.10 trở lên**. Kiểm bằng `python3 --version`. Chưa có thì cài: `brew install python`.
+Cần **macOS 14 (Sonoma) trở lên**: Chromium của Playwright không có bản cho macOS cũ hơn, cả chip Apple lẫn Intel. Cần **Python 3.10 trở lên**; kiểm bằng `python3 --version`. Chưa có thì cài: máy chip Apple dùng `brew install python`; máy Intel dùng bộ cài chính thức từ [python.org](https://www.python.org/downloads/macos/), không dùng Homebrew vì Homebrew đã ngừng bản dựng sẵn cho Mac Intel. Python cài từ python.org cần chạy thêm `Install Certificates.command` trong `/Applications/Python 3.x/`.
 
 ```bash
 git clone https://github.com/namhd-SG/creative-tracker-adlibrary.git
