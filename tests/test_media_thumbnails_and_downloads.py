@@ -137,3 +137,16 @@ def test_parallel_first_connections_do_not_collide(tmp_path):
     assert errors == []
     cols = {r[1] for r in sqlite3.connect(tmp_path / "new.db").execute("PRAGMA table_info(ads)")}
     assert {"video_url", "kind"} <= cols
+
+
+def test_image_ad_downloads_the_still_picture(db):
+    from ctal.ad_media_fields import media_of
+    snap = {"images": [{"original_image_url": f"https://scontent.example/still.jpg?oe={int(time.time()) + 86400:X}",
+                        "resized_image_url": "https://scontent.example/small.jpg"}], "videos": [], "cards": []}
+    m = media_of(snap)
+    assert (m.kind, m.video_url) == ("image", None) and m.image_url.startswith("https://scontent.example/still.jpg")
+    ad = real_ad()
+    ad.kind, ad.video_url, ad.video_sd_url, ad.image_url = "image", None, None, m.image_url
+    storage.upsert_ads(db, [ad])
+    got, data = md.fetch_media(db, ad.ad_archive_id, lambda p: pytest.fail("fresh link"), fetch=lambda u: u.encode())
+    assert data.decode() == m.image_url
