@@ -23,6 +23,7 @@ from ctal.parse_ad_library_payload import (
     parse_initial_html,
     parse_page_info_text,
     parse_page_input,
+    results_count_from_text,
 )
 
 log = logging.getLogger("ctal")
@@ -103,11 +104,19 @@ def _collect_ads(page: Page, page_id: str, since: str, max_scrolls: int) -> tupl
     page.on("response", on_response)
     page.goto(ad_library_url(page_id, since), wait_until="domcontentloaded", timeout=60_000)
     page.wait_for_timeout(4000)
+    try:  # slow renders: measured once "None" total + no About on a page that shows "~110 results"
+        page.wait_for_function("() => /\\d\\s+results?\\b|No ads|log in/i.test(document.body.innerText)",
+                               timeout=12_000)
+    except Exception:
+        log.debug("results line not visible after 16s")
     got, t = parse_initial_html(page.content())
     for a in got:
         ads[a.ad_archive_id] = a
     total[0] = t if t is not None else total[0]
     body = page.locator("body").inner_text()
+    if total[0] is None:
+        # Big pages sometimes ship no `count` in the JSON; the visible "~7,600 results" still has it.
+        total[0] = results_count_from_text(body)
     if "log in to continue" in body.lower() or "you must log in" in body.lower():
         warnings.append("Facebook đòi đăng nhập — dừng, không vượt rào.")
         page.remove_listener("response", on_response)
@@ -153,11 +162,15 @@ def _collect_page_info(page: Page, page_id: str) -> PageInfo | None:
 
     page.on("response", on_response)
     try:
-        page.evaluate("window.scrollTo(0, 0)")
-        page.get_by_text("About", exact=True).first.click(timeout=10_000)
-        page.wait_for_timeout(3500)
-    except Exception as exc:
-        log.warning("không mở được tab About: %s", exc)
+        for attempt in range(2):  # one retry: the tab sometimes renders late or the click lands early
+            try:
+                page.evaluate("window.scrollTo(0, 0)")
+                page.get_by_text("About", exact=True).first.click(timeout=10_000)
+                page.wait_for_timeout(3500 + 2500 * attempt)
+            except Exception as exc:
+                log.warning("không mở được tab About (lần %d): %s", attempt + 1, exc)
+            if found:
+                break
     finally:
         page.remove_listener("response", on_response)
     return found[-1] if found else None

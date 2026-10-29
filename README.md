@@ -29,7 +29,7 @@ Kiểm cài xong: `ctal --help`.
 
 ## Thêm đối thủ
 
-Cấu trúc: **app đối thủ → các page của app đó**. Danh sách nằm trong một file `doi_thu.csv` (mở được bằng Excel/Numbers), 4 cột: `app, link_store, link_ad_library, ghi_chu`. Mỗi page một dòng. Lần chạy đầu, tool tạo `doi_thu.csv` từ danh sách mẫu `doi_thu.mau.csv` (vài app có sẵn để thử); bạn sửa hoặc xoá tuỳ ý.
+Cấu trúc: **app đối thủ → các page của app đó**. Danh sách nằm trong một file `doi_thu.csv` (mở được bằng Excel/Numbers), 4 cột: `app, link_store, link_ad_library, ghi_chu`. Mỗi page một dòng. Lần chạy đầu, tool tạo `doi_thu.csv` từ danh sách mẫu `doi_thu.mau.csv` (3 app, 4 page nhỏ, quét thử ~2–3 phút); bạn sửa hoặc xoá tuỳ ý.
 
 **1. Thêm app** (tên tuỳ đặt + link store):
 
@@ -69,12 +69,21 @@ ctal scan --app "Hailuo AI"        # chỉ quét các page của 1 app
 ctal scan https://www.facebook.com/ClashofClans   # quét lẻ 1 page, không thêm vào danh sách
 ```
 
-Tool tự nghỉ 8–15 giây giữa các page. Mỗi page mất khoảng **15 giây** (page vài chục quảng cáo) tới **4–5 phút** (page ~1.100 quảng cáo trong 14 ngày). Danh sách dài thì nên để chạy qua đêm.
+Tool tự nghỉ 8–15 giây giữa các page. **Thời gian quét phụ thuộc số quảng cáo page có hiển thị trong 14 ngày** — kể cả quảng cáo chạy lâu ngày từ trước, không chỉ quảng cáo mới. Ad Library không lọc được theo ngày bắt đầu và không xếp theo ngày, nên tool phải lướt hết số đó. Đo thật ngày 29/10/2026:
+
+| Page có hiển thị trong 14 ngày | Thời gian / page | Ví dụ |
+|---|---|---|
+| ≤ 30 quảng cáo | ~10–15 giây | Appediet 29, Glam AI 12, Vidix (page nhỏ) 13 |
+| ~100 quảng cáo | ~40–70 giây | Vidix 112 |
+| ~1.100 quảng cáo | ~4–5 phút | Clash of Clans 1.135 |
+| vài nghìn quảng cáo | **>10 phút**, chạm trần cuộn ⇒ báo "chưa thu hết" | các page app AI lớn ~4.800 |
+
+**Danh sách mẫu** (3 app, 4 page nhỏ) quét hết khoảng **2–3 phút** (đo: 148 giây). Danh sách dài có page lớn thì nên chạy qua đêm (xem mục Quét hằng ngày). Muốn nhanh hơn thì hạ `--max-scrolls` (ví dụ `--max-scrolls 30` ≈ tối đa ~2 phút/page), đánh đổi là page lớn bị báo "chưa thu hết".
 
 | Tuỳ chọn | Ý nghĩa |
 |---|---|
 | `--days 14` | số ngày gần nhất cần lấy (mặc định 14) |
-| `--max-scrolls 150` | trần số lần cuộn mỗi page (mặc định 150) |
+| `--max-scrolls 150` | trần số lần cuộn mỗi page (mặc định 150 ≈ tối đa ~10 phút và ~1.500 quảng cáo / page) |
 | `--show` | hiện cửa sổ trình duyệt để xem tool đang làm gì |
 | `ctal report` | xuất lại báo cáo từ dữ liệu đã lưu, không cần mạng |
 

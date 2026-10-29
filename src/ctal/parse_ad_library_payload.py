@@ -233,6 +233,17 @@ def parse_page_info(obj, page_id: str) -> PageInfo | None:
     )
 
 
+_RESULTS_RE = re.compile(r"~?\s*([\d][\d,.]*)\s+results?\b", re.I)
+
+
+def results_count_from_text(text: str) -> int | None:
+    """'~7,600 results' / '~9 results' shown above the ad grid → 7600 / 9 (approximate)."""
+    m = _RESULTS_RE.search(text or "")
+    if not m:
+        return None
+    return int(re.sub(r"[,.]", "", m.group(1)))
+
+
 def parse_page_info_text(text: str, page_id: str) -> PageInfo | None:
     """Multi-document GraphQL text → the last PageInfo found (block may sit on any line)."""
     found = None

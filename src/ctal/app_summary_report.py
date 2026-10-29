@@ -36,6 +36,20 @@ def _sums(rows) -> tuple[int, int, int]:
     return (sum(r.new_ads for r in rows), sum(r.new_creatives for r in rows), sum(r.new_sets for r in rows))
 
 
+def coverage_cell(scan: dict | None) -> str:
+    """Coverage as HTML: a % when the total is known, an explicit note when not, a warning on scroll cap."""
+    scan = scan or {}
+    cov = scan.get("coverage")
+    capped = any("Chạm trần" in w for w in scan.get("warnings") or [])
+    if isinstance(cov, (int, float)):
+        text = f"{cov:.0%} <span class='mute small'>({scan.get('collected')}/{scan.get('shown_total')})</span>"
+    else:
+        text = f"không biết tổng <span class='mute small'>(thu {scan.get('collected', '?')})</span>"
+    if capped or (isinstance(cov, (int, float)) and cov < 0.98):
+        text += "<div class='warnc'>⚠ chưa thu hết — số có thể thiếu</div>"
+    return text
+
+
 def write_app_summary_csv(path: Path, blocks: list[dict]) -> None:
     """Long format: one row per (app, page or TỔNG APP, day)."""
     with path.open("w", newline="", encoding="utf-8-sig") as f:
@@ -59,19 +73,22 @@ def write_app_summary_html(path: Path, blocks: list[dict], since: str, until: st
         for p in b["pages"]:
             info = p["info"]
             if not info:
-                rows.append(f"<tr><td colspan=8 class='mute'>{_e(p['input'])} — chưa quét</td></tr>")
+                label = p.get("note") or p.get("page_id") or "page"
+                rows.append(
+                    f"<tr><td class='pg'><a href='{_e(p['input'])}' target='_blank' rel='noopener'>{_e(label)}</a>"
+                    f"<div class='mute small'>{_e(p.get('page_id') or '')}</div></td>"
+                    "<td colspan=7><span class='tag'>chưa quét</span></td></tr>")
                 continue
             ads, cr, st = _sums(p["rows"])
-            cov = (p["scan"] or {}).get("coverage")
             pt = p.get("points_to_app")
             pt_cell = f"{pt[0]}/{pt[1]}" if pt and pt[1] else "—"
             rows.append(
-                f"<tr><td><a href='{_e(info.page_id)}.html'>{_e(info.page_name or info.page_id)}</a>"
-                f"<div class='mute small'>{_e(info.page_id)}</div></td><td>{_e(info.owner or '—')}</td>"
+                f"<tr><td class='pg'><a href='{_e(info.page_id)}.html'>{_e(info.page_name or info.page_id)}</a>"
+                f"<div class='mute small'>{_e(info.page_id)}</div></td><td class='own'>{_e(info.owner or '—')}</td>"
                 f"<td>{ads}</td><td>{cr}</td><td>{st}</td><td>{pt_cell}</td>"
-                f"<td>{f'{cov:.0%}' if isinstance(cov, (int, float)) else '—'}</td>"
+                f"<td>{coverage_cell(p['scan'])}</td>"
                 f"<td class='mute small'>{_e(_local_time((p['scan'] or {}).get('at')) or '—')}</td></tr>")
-        ads, cr, st = _sums(b["total"])
+        ads, cr, st = _sums(b["total"]) if any(p["info"] for p in b["pages"]) else ("—", "—", "—")
         rows.append(f"<tr class='total'><td>Tổng app</td><td></td><td>{ads}</td><td>{cr}</td><td>{st}</td><td></td><td></td><td></td></tr>")
         days = "".join(
             f"<tr><td>{_e(r.day)}</td><td>{r.new_ads}</td><td>{r.new_creatives}</td><td>{r.new_sets}</td></tr>"
@@ -80,8 +97,8 @@ def write_app_summary_html(path: Path, blocks: list[dict], since: str, until: st
                  if b["link_store"] else "<span class='mute'>chưa có link store</span>")
         cards.append(
             f"<div class='card'><h2>{_e(b['app'])}</h2><p class='mute small'>{store}</p>"
-            "<table><thead><tr><th>Page</th><th>Chủ page</th><th>QC mới</th><th>Creative mới</th><th>Bộ mới</th>"
-            f"<th title='Quảng cáo bắt đầu trong kỳ có link trỏ đúng store của app'>Trỏ đúng app</th><th>Độ phủ</th><th>Quét lúc</th></tr></thead><tbody>{''.join(rows)}</tbody></table>"
+            "<div class='wrap'><table><thead><tr><th>Page</th><th>Chủ page</th><th>QC mới</th><th>Creative mới</th><th>Bộ mới</th>"
+            f"<th title='Quảng cáo bắt đầu trong kỳ có link trỏ đúng store của app'>Trỏ đúng app</th><th>Độ phủ</th><th>Quét lúc</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div>"
             "<details><summary>Tổng app theo ngày</summary><table><thead><tr><th>Ngày</th><th>QC mới</th>"
             f"<th>Creative mới</th><th>Bộ mới</th></tr></thead><tbody>"
             f"{days or '<tr><td colspan=4>Không có gì mới.</td></tr>'}</tbody></table></details></div>")
@@ -91,7 +108,9 @@ def write_app_summary_html(path: Path, blocks: list[dict], since: str, until: st
 <style>{BASE_CSS}
 .mute{{color:var(--mute)}}.small{{font-size:12px}}tr.total td{{font-weight:600;border-top:2px solid var(--line)}}
 details{{margin-top:12px}}summary{{cursor:pointer;color:var(--mute);font-size:13px}}
-.wrap{{overflow-x:auto}}</style></head><body><main>
+.wrap{{overflow-x:auto}}td.pg{{max-width:240px}}td.pg a{{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+td.own{{max-width:200px;overflow-wrap:anywhere}}.tag{{display:inline-block;padding:1px 8px;border-radius:10px;background:var(--line);color:var(--mute);font-size:12px}}
+.warnc{{color:#b26a00;font-size:12px;margin-top:2px}}table{{table-layout:auto}}</style></head><body><main>
 <h1>Đối thủ — creative mới theo app</h1>
 <p class="sub">{_e(since)} → {_e(until)} · {len(blocks)} app · bấm tên page để xem chi tiết từng page</p>
 {''.join(cards) or '<div class="card">Danh sách đối thủ trống.</div>'}

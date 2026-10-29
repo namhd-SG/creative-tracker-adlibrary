@@ -176,7 +176,9 @@ def _report_apps(args, con) -> None:
             pid = e.page_id or storage.page_id_for_input(con, e.link_ad_library)
             loaded = storage.load_page(con, pid) if pid else None
             if not loaded or pid in seen:
-                page_blocks.append({"input": e.link_ad_library, "info": None, "rows": [], "scan": None})
+                if pid not in seen:  # same page listed twice in one app: show it once
+                    page_blocks.append({"input": e.link_ad_library, "page_id": pid, "note": e.ghi_chu,
+                                        "info": None, "rows": [], "scan": None})
                 continue
             seen.add(pid)
             _report_one(con, pid, args.days, args.out, quiet=True)

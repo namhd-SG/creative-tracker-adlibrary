@@ -99,3 +99,15 @@ def test_fanpage_html_gives_ad_library_id_not_profile_id():
 ])
 def test_page_input_forms(text, expected):
     assert parse_page_input(text) == expected
+
+
+@pytest.mark.parametrize("text,expected", [
+    ("Nike | ~15,000 results | Filters", 15000),
+    ("~9 results", 9),
+    ("1 result", 1),
+    ("Ads About ~2.544 results", 2544),
+    ("no count here", None),
+])
+def test_results_count_from_visible_text(text, expected):
+    from ctal.parse_ad_library_payload import results_count_from_text
+    assert results_count_from_text(text) == expected
