@@ -35,6 +35,7 @@ class App:
         self.thumbs = Path(db).parent / "thumbs"
         self.scans = ScanRunner(self.db, self.list_file, Path(out), days, cwd=Path.cwd())
         cl.ensure_file(self.list_file)
+        storage.connect(self.db).close()   # create / upgrade the database once, before parallel requests
 
     def con(self):
         return storage.connect(self.db)

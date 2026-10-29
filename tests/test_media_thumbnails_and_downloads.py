@@ -119,3 +119,21 @@ def test_zip_names_failures_and_single_rescan(db, tmp_path):
     with zipfile.ZipFile(dest) as z:
         assert z.namelist() == ["app_page_2026-10-22_1.mp4", "app_page_2026-10-22_1-2.mp4"]
         assert z.infolist()[0].compress_type == zipfile.ZIP_STORED
+
+
+def test_parallel_first_connections_do_not_collide(tmp_path):
+    # the web page fires two API calls at once on a brand-new database
+    import threading
+    errors = []
+
+    def go():
+        try:
+            storage.connect(tmp_path / "new.db").close()
+        except Exception as exc:
+            errors.append(exc)
+    threads = [threading.Thread(target=go) for _ in range(8)]
+    [t.start() for t in threads]
+    [t.join() for t in threads]
+    assert errors == []
+    cols = {r[1] for r in sqlite3.connect(tmp_path / "new.db").execute("PRAGMA table_info(ads)")}
+    assert {"video_url", "kind"} <= cols

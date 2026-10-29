@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS ads (
   link_url TEXT,
   destination TEXT,
   body TEXT,
+  kind TEXT, thumb_url TEXT, video_url TEXT, video_sd_url TEXT, image_url TEXT, title TEXT, cta_text TEXT,
   first_seen TEXT NOT NULL,
   last_seen TEXT NOT NULL
 );
@@ -56,7 +57,11 @@ def connect(path: str | Path) -> sqlite3.Connection:
     have = {r[1] for r in con.execute("PRAGMA table_info(ads)")}
     for col, typ in LATER_COLS.items():
         if col not in have:
-            con.execute(f"ALTER TABLE ads ADD COLUMN {col} {typ}")
+            try:
+                con.execute(f"ALTER TABLE ads ADD COLUMN {col} {typ}")
+            except sqlite3.OperationalError as exc:  # another connection added it a moment ago
+                if "duplicate column" not in str(exc):
+                    raise
     con.commit()
     return con
 
