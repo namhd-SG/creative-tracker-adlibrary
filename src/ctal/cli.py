@@ -22,6 +22,7 @@ from pathlib import Path
 
 from ctal import competitor_list as cl
 from ctal import storage
+from ctal.parse_ad_library_payload import ad_library_today
 from ctal.thumbnails import save_thumbnails
 from ctal.daily_counts import daily_rows, sets_detail
 from ctal.app_summary_report import points_to_app, write_app_summary_csv, write_app_summary_html
@@ -37,7 +38,8 @@ OUT = Path("out")
 
 
 def _window(days: int) -> tuple[str, str]:
-    return (date.today() - timedelta(days=days)).isoformat(), date.today().isoformat()
+    today = ad_library_today()   # Ad Library days are Los Angeles days
+    return (today - timedelta(days=days)).isoformat(), today.isoformat()
 
 
 # ---------- competitor list ----------
@@ -104,6 +106,17 @@ def _scan_targets(args) -> list[tuple[str | None, str]]:
     return [(app, e.link_ad_library) for app, pages in grouped.items() for e in pages]
 
 
+def _machine(kind: str, **data) -> None:
+    """One machine-readable line for the web app's live status: `@<kind> {json}`."""
+    import json
+    print(f"@{kind} " + json.dumps(data, ensure_ascii=False), flush=True)
+
+
+def _progress_printer(target: str):
+    return lambda collected, total, scrolls: _machine("progress", target=target, collected=collected,
+                                                      total=total, scrolls=scrolls)
+
+
 def cmd_scan(args) -> int:
     from ctal.ad_library_scraper import scan  # lazy: report/tests must work without a browser
 
@@ -125,9 +138,12 @@ def cmd_scan(args) -> int:
         attempted += 1
         print(f"→ [{i + 1}/{len(targets)}] {app + ' · ' if app else ''}{target}", flush=True)
         try:
-            res = scan(target, days=args.days, max_scrolls=args.max_scrolls, headless=not args.show)
+            res = scan(target, days=args.days, max_scrolls=args.max_scrolls, headless=not args.show,
+                       progress=_progress_printer(target) if args.progress else None)
         except Exception as exc:
             print(f"  LỖI: {exc}", file=sys.stderr)
+            if args.progress:
+                _machine("error", target=target, message=str(exc)[:200])
             rc = 1
             continue
         done.add(res.page_id)
@@ -145,6 +161,10 @@ def cmd_scan(args) -> int:
               + (f", lỗi {th.failed}" if th.failed else "") + (f", không có link {th.no_link}" if th.no_link else ""))
         for w in res.warnings:
             print(f"  ⚠ {w}")
+        if args.progress:
+            _machine("result", target=target, page_id=res.page_id, page_name=res.info.page_name,
+                     collected=len(res.ads), shown_total=res.shown_total, coverage=res.coverage,
+                     seconds=round(res.seconds), warnings=res.warnings, since=res.since)
         if not args.no_report and args.pages:
             _report_one(con, res.page_id, args.days, args.out)
     if not args.no_report and not args.pages:
@@ -271,6 +291,7 @@ def main(argv=None) -> int:
     s.add_argument("--max-scrolls", type=int, default=150, help="trần số lần cuộn mỗi page (mặc định 150)")
     s.add_argument("--show", action="store_true", help="hiện cửa sổ trình duyệt")
     s.add_argument("--no-report", action="store_true", help="chỉ quét, không xuất báo cáo")
+    s.add_argument("--progress", action="store_true", help=argparse.SUPPRESS)  # live status lines for `ctal web`
     s.set_defaults(func=cmd_scan)
 
     r = sub.add_parser("report", help="Xuất lại báo cáo từ dữ liệu đã quét (không cần mạng)")

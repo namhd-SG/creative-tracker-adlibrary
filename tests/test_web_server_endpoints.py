@@ -110,11 +110,74 @@ def test_media_redirects_to_fresh_link(site):
     assert e.value.code == 302 and e.value.headers["Location"].startswith("https://")
 
 
-def test_scan_endpoint_starts_once(site, monkeypatch):
+def test_scan_endpoints_queue_pages_and_stop(site, monkeypatch):
     base, ad, app, _ = site
-    started = []
-    monkeypatch.setattr(app.scans, "_run", lambda cmd: (started.append(cmd), time.sleep(0.3), app.scans._lock.release()))
+    release, seen = threading.Event(), []
+
+    def fake_run(item, on_progress):                     # stands in for the child `ctal scan` process
+        seen.append(item["key"])
+        on_progress({"collected": 3, "total": 9, "scrolls": 1})
+        release.wait(5)
+        return {"page_id": item["key"], "collected": 9, "shown_total": 9, "coverage": 1.0}
+    monkeypatch.setattr(app.scans, "_run_page", fake_run)
+    app.scans.pause = (0, 0)
     code, _, body = post(base + "/api/scan", {"app": "Vidix"})
-    assert code == 200 and json.loads(body)["started"] is True
-    assert started and started[0][-2:] == ["--app", "Vidix"] and "--days" in started[0]
-    assert post(base + "/api/scan", {})[0] == 409                 # one scan at a time
+    r = json.loads(body)
+    assert code == 200 and r["added"] == 1 and r["running"]
+    for _ in range(100):
+        st = json.loads(get(base + "/api/scan")[2])
+        if st["pages"].get(ad.page_id, {}).get("status") == "running":
+            break
+        time.sleep(0.02)
+    assert st["pages"][ad.page_id]["collected"] == 3 and st["current_page"]["app"] == "Vidix"
+    assert json.loads(post(base + "/api/scan", {"key": ad.page_id})[2])["added"] == 0   # already running
+    assert post(base + "/api/scan", {"app": "Không có"})[0] == 400
+    release.set()
+    for _ in range(100):
+        st = json.loads(get(base + "/api/scan")[2])
+        if not st["running"]:
+            break
+        time.sleep(0.02)
+    assert st["pages"][ad.page_id]["status"] == "done" and seen == [ad.page_id]
+    assert json.loads(post(base + "/api/scan/stop", {})[2])["running"] is False
+
+
+def test_scan_window_comes_from_the_page_date_filter(site, monkeypatch):
+    from datetime import date, timedelta
+    base, ad, app, _ = site
+    got = []
+    monkeypatch.setattr(app.scans, "_run_page", lambda item, on_progress: got.append(item) or
+                        {"page_id": item["key"], "collected": 1, "shown_total": 1, "coverage": 1.0})
+    app.scans.pause = (0, 0)
+    since = (date.today() - timedelta(days=45)).isoformat()
+    r = json.loads(post(base + "/api/scan", {"app": "Vidix", "since": since})[2])
+    assert r["since"] == since and r["days"] == 45
+    for _ in range(100):
+        if got:
+            break
+        time.sleep(0.02)
+    assert got[0]["days"] == 45
+    cmd = app.scans._cmd(got[0]["target"], "--progress", days=got[0]["days"])
+    assert cmd[cmd.index("--days") + 1] == "45"                  # what the child `ctal scan` receives
+    assert post(base + "/api/scan", {"app": "Vidix", "since": "29-10-2026"})[0] == 400
+
+
+def test_api_window_follows_the_date_filter(site):
+    from datetime import date, timedelta
+    base, ad, app, _ = site
+    con = storage.connect(app.db)
+    old = storage.load_ad(con, ad.ad_archive_id)
+    old.ad_archive_id, old.collation_id = "777000777", None
+    old.start_day = (date.today() - timedelta(days=40)).isoformat()   # outside the default 14 days
+    storage.upsert_ads(con, [old])
+    default = json.loads(get(base + "/api/library")[2])
+    assert "777000777" not in {c["ad_id"] for c in default["cards"]}
+    since = (date.today() - timedelta(days=60)).isoformat()
+    wide = json.loads(get(base + f"/api/library?since={since}")[2])
+    assert "777000777" in {c["ad_id"] for c in wide["cards"]}
+    assert wide["since"] == since and wide["today"] == date.today().isoformat()
+    comp = json.loads(get(base + f"/api/competitors?since={since}")[2])
+    assert len(comp["apps"][0]["days"]) == 61
+    y = (date.today() - timedelta(days=1)).isoformat()
+    narrow = json.loads(get(base + f"/api/competitors?since={y}&until={y}")[2])
+    assert len(narrow["apps"][0]["days"]) >= 15        # tiles still get the last 14 days

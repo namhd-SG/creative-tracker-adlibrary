@@ -12,6 +12,7 @@ import time
 import urllib.parse
 from dataclasses import dataclass, field
 from datetime import date, timedelta
+from typing import Callable
 
 from playwright.sync_api import Page, sync_playwright
 
@@ -23,6 +24,7 @@ from ctal.parse_ad_library_payload import (
     parse_initial_html,
     parse_page_info_text,
     parse_page_input,
+    ad_library_today,
     results_count_from_text,
 )
 
@@ -83,7 +85,9 @@ def resolve_page_id(page: Page, user_input: str) -> str:
     return page_id
 
 
-def _collect_ads(page: Page, page_id: str, since: str, max_scrolls: int) -> tuple[dict[str, Ad], int | None, int, list[str]]:
+def _collect_ads(page: Page, page_id: str, since: str, max_scrolls: int,
+                 progress: Callable[[int, int | None, int], None] | None = None,
+                 ) -> tuple[dict[str, Ad], int | None, int, list[str]]:
     ads: dict[str, Ad] = {}
     total: list[int | None] = [None]
     warnings: list[str] = []
@@ -117,6 +121,8 @@ def _collect_ads(page: Page, page_id: str, since: str, max_scrolls: int) -> tupl
     if total[0] is None:
         # Big pages sometimes ship no `count` in the JSON; the visible "~7,600 results" still has it.
         total[0] = results_count_from_text(body)
+    if progress:
+        progress(len(ads), total[0], 0)
     if "log in to continue" in body.lower() or "you must log in" in body.lower():
         warnings.append("Facebook đòi đăng nhập — dừng, không vượt rào.")
         page.remove_listener("response", on_response)
@@ -134,6 +140,8 @@ def _collect_ads(page: Page, page_id: str, since: str, max_scrolls: int) -> tupl
             page.wait_for_timeout(800)
         page.evaluate("window.scrollBy(0, document.body.scrollHeight)")
         scrolls += 1
+        if progress:
+            progress(len(ads), total[0], scrolls)
         _pause(2.0 + 3 * stale, 3.5 + 3 * stale)
         stale = stale + 1 if len(ads) == before else 0
     page.remove_listener("response", on_response)
@@ -176,8 +184,10 @@ def _collect_page_info(page: Page, page_id: str) -> PageInfo | None:
     return found[-1] if found else None
 
 
-def scan(user_input: str, days: int = 14, max_scrolls: int = 150, headless: bool = True) -> ScanResult:
-    since = (date.today() - timedelta(days=days)).isoformat()
+def scan(user_input: str, days: int = 14, max_scrolls: int = 150, headless: bool = True,
+         progress: Callable[[int, int | None, int], None] | None = None) -> ScanResult:
+    """`progress(collected, shown_total, scrolls)` is called after every scroll (live status in the web app)."""
+    since = (ad_library_today() - timedelta(days=days)).isoformat()   # same day count as start_date
     t0 = time.time()
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=headless)
@@ -187,12 +197,12 @@ def scan(user_input: str, days: int = 14, max_scrolls: int = 150, headless: bool
             page_id = resolve_page_id(page, user_input)
             log.info("page_id = %s", page_id)
             _pause()
-            ads, shown, scrolls, warnings = _collect_ads(page, page_id, since, max_scrolls)
+            ads, shown, scrolls, warnings = _collect_ads(page, page_id, since, max_scrolls, progress)
             log.info("thu được %d quảng cáo / Ad Library báo %s", len(ads), shown)
             if shown and len(ads) < RETRY_BELOW * shown and scrolls < max_scrolls:
                 log.warning("độ phủ %d/%d thấp — nghỉ rồi tải lại trang 1 lần", len(ads), shown)
                 _pause(25, 40)
-                more, shown2, scrolls2, warnings2 = _collect_ads(page, page_id, since, max_scrolls)
+                more, shown2, scrolls2, warnings2 = _collect_ads(page, page_id, since, max_scrolls, progress)
                 ads.update(more)
                 shown, scrolls = shown2 or shown, scrolls + scrolls2
                 warnings += [w for w in warnings2 if w not in warnings]

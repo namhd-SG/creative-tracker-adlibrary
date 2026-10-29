@@ -2,7 +2,8 @@
 
 GET  /                       the page (src/ctal/web/index.html)
 GET  /api/library            creative cards        GET /api/competitors   apps → pages
-GET  /api/scan               scan status           POST /api/scan {app?}  start a scan
+GET  /api/scan               live status (per page) POST /api/scan {app?|key?}  queue pages
+POST /api/scan/stop          drop the queue, stop the page being scanned
 POST /api/apps {name,link_store}                   POST /api/pages {app,link,note}
 GET  /api/media/<ad_id>      302 to a fresh video/image link (for the player)
 GET  /api/download/<ad_id>   the file as an attachment
@@ -21,7 +22,7 @@ from pathlib import Path
 from ctal import competitor_list as cl
 from ctal import storage, web_data
 from ctal.media_download import MediaError, fetch_media, fresh_link, write_zip
-from ctal.scan_jobs import ScanRunner
+from ctal.scan_jobs import ScanQueue
 
 HOST = "127.0.0.1"
 STATIC = Path(__file__).parent / "web"
@@ -33,7 +34,7 @@ class App:
     def __init__(self, db: Path, list_file: Path, out: Path, days: int = 14):
         self.db, self.list_file, self.days = Path(db), Path(list_file), days
         self.thumbs = Path(db).parent / "thumbs"
-        self.scans = ScanRunner(self.db, self.list_file, Path(out), days, cwd=Path.cwd())
+        self.scans = ScanQueue(self.db, self.list_file, Path(out), days, cwd=Path.cwd())
         cl.ensure_file(self.list_file)
         storage.connect(self.db).close()   # create / upgrade the database once, before parallel requests
 
@@ -84,7 +85,8 @@ class Handler(BaseHTTPRequestHandler):
 
     # ---------- GET ----------
     def do_GET(self):
-        path = urllib.parse.urlparse(self.path).path
+        url = urllib.parse.urlparse(self.path)
+        path, q = url.path, urllib.parse.parse_qs(url.query)
         a = self.app
         try:
             if path in ("/", "/index.html"):
@@ -93,10 +95,11 @@ class Handler(BaseHTTPRequestHandler):
                 return self._file(STATIC / m.group(1))
             if m := re.fullmatch(r"/thumbs/(\d+)\.jpg", path):
                 return self._file(a.thumbs / f"{m.group(1)}.jpg")
-            if path == "/api/library":
-                return self._json(web_data.library(a.con(), a.entries(), a.thumbs, a.days))
-            if path == "/api/competitors":
-                return self._json(web_data.competitors(a.con(), a.entries(), a.days))
+            if path in ("/api/library", "/api/competitors"):
+                since, until = web_data.parse_range(q.get("since", [None])[0], q.get("until", [None])[0], a.days)
+                if path == "/api/library":
+                    return self._json(web_data.library(a.con(), a.entries(), a.thumbs, since, until))
+                return self._json(web_data.competitors(a.con(), a.entries(), since, until))
             if path == "/api/scan":
                 return self._json(a.scans.status())
             if m := re.fullmatch(r"/api/media/(\d+)", path):
@@ -114,6 +117,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._json({"error": "không có đường dẫn này"}, 404)
         except MediaError as exc:
             return self._json({"error": str(exc)}, 410)
+        except ValueError as exc:
+            return self._json({"error": str(exc)}, 400)
         except (BrokenPipeError, ConnectionResetError):
             return None
 
@@ -134,8 +139,16 @@ class Handler(BaseHTTPRequestHandler):
                 cl.save(entries, a.list_file)
                 return self._json({"status": status, "page_id": cl.parse_page_input(body.get("link", ""))[0]})
             if path == "/api/scan":
-                started = a.scans.start(body.get("app") or None)
-                return self._json({"started": started, **a.scans.status()}, 200 if started else 409)
+                since, _ = web_data.parse_range(body.get("since"), None, a.days)
+                days = web_data.days_since(since)
+                plan = web_data.scan_plan(a.con(), a.entries(), body.get("app") or None, body.get("key") or None, days)
+                if not plan:
+                    return self._json({"error": "Không có page nào để quét."}, 400)
+                added = a.scans.enqueue(plan)
+                return self._json({"added": added, "planned": len(plan), "since": since, "days": days, **a.scans.status()})
+            if path == "/api/scan/stop":
+                a.scans.stop()
+                return self._json(a.scans.status())
             if path == "/api/zip":
                 con, ids = a.con(), [str(i) for i in body.get("ids", []) if str(i).isdigit()]
                 items = [(i, a.file_name(con, ad)) for i in ids if (ad := storage.load_ad(con, i))]

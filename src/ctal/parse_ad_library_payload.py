@@ -11,7 +11,7 @@ import json
 import re
 import urllib.parse
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from zoneinfo import ZoneInfo
 
 from ctal.ad_media_fields import media_of
@@ -68,6 +68,12 @@ class PageInfo:
     name_changes: int = 0
     admin_countries: list[str] = field(default_factory=list)
     profile_url: str | None = None
+
+
+def ad_library_today() -> date:
+    """Today as Ad Library counts days (Los Angeles). From ~14:00 to midnight Vietnam time this is
+    still "yesterday" in Vietnam, and today's ads keep arriving until LA midnight."""
+    return datetime.now(AD_LIBRARY_TZ).date()
 
 
 def day_of(epoch: int | None) -> str | None:

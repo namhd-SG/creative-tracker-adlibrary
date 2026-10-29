@@ -3,7 +3,7 @@
 <title>Creative Tracker — Ad Library</title>
 <style>
 :root{--bg:#f6f7f9;--card:#fff;--ink:#16181d;--mute:#6b7280;--line:#e5e7eb;--grid:#eef0f3;--hl:#eff6ff;--blue:#2563eb;--green:#059669;--amber:#b45309}
-@media (prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#171a21;--ink:#e8eaee;--mute:#9aa1ad;--line:#262a33;--grid:#1e222b;--hl:#172033}}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#171a21;--ink:#e8eaee;--mute:#9aa1ad;--line:#262a33;--grid:#1e222b;--hl:#172033;--blue:#60a5fa;--green:#34d399}}
 *{box-sizing:border-box}html,body{max-width:100%;overflow-x:hidden}
 body{margin:0;font:14px/1.45 -apple-system,Segoe UI,Inter,sans-serif;background:var(--bg);color:var(--ink)}
 header{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:10px 20px;border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:0;z-index:5}
@@ -81,7 +81,24 @@ dialog ol{font-size:13px;padding-left:18px;margin:8px 0;color:var(--mute)}.check
 .plist{margin:8px 0 0;padding:0;list-style:none}.plist li{font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;margin-top:4px;display:flex;justify-content:space-between;gap:8px}
 .toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--card);padding:8px 16px;border-radius:999px;font-size:13px;opacity:0;transition:.2s;pointer-events:none;z-index:20}
 .toast.on{opacity:1}.btn[disabled]{opacity:.55;cursor:progress}
-.fresh.busy{border-color:var(--blue);color:var(--blue)}.empty b{display:block;color:var(--ink);font-size:15px;margin-bottom:6px}
+.fresh.busy{border-color:var(--blue);color:var(--blue)}
+.howto a,dialog a,.panel p a{color:var(--blue)}
+.prog{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12px;border:1px solid var(--blue);border-radius:999px;padding:3px 4px 3px 12px;max-width:min(640px,100%);min-width:0}
+.prog .ptext{color:var(--blue);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.prog .bar{flex:0 0 90px;height:6px;border-radius:3px;background:var(--grid);overflow:hidden}.prog .bar i{display:block;height:100%;width:0;background:var(--blue);transition:width .4s}
+.prog .btn{padding:2px 10px}.prog[hidden]{display:none}
+.rwarn{border:1px solid #f59e0b;background:#fffbeb;color:#92400e;border-radius:10px;padding:7px 12px;font-size:13px;margin-bottom:12px}
+@media (prefers-color-scheme:dark){.rwarn{background:#2a1f0a;color:#fcd34d}}
+.scanrange{font-size:12px;color:var(--mute)}.scanrange b{color:var(--ink)}.scanrange .w{color:#b45309}
+.st{display:inline-block;font-size:12px;line-height:18px;padding:1px 9px;border-radius:999px;white-space:nowrap;background:var(--grid);color:var(--mute)}
+.st.q{border:1px dashed var(--line)}.st.run{background:#dbeafe;color:#1d4ed8}.st.ok{background:#dcfce7;color:#166534}.st.warn{background:#fef3c7;color:#92400e}
+.st.err{background:#fee2e2;color:#b91c1c}
+@media (prefers-color-scheme:dark){.st.run{background:#172554;color:#93c5fd}.st.ok{background:#052e16;color:#86efac}.st.warn{background:#3a2a05;color:#fcd34d}.st.err{background:#450a0a;color:#fca5a5}}
+.st.run::before{content:"";display:inline-block;width:8px;height:8px;margin-right:6px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:spin .8s linear infinite;vertical-align:-1px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.rowbtn{font:inherit;font-size:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:1px 9px;cursor:pointer;white-space:nowrap}
+.rowbtn:hover{border-color:var(--ink)}.rowbtn[disabled]{opacity:.45;cursor:default}
+#logpre{max-height:260px;overflow:auto;font-size:11px;line-height:1.5;background:var(--grid);border-radius:8px;padding:8px 10px;margin:10px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}.empty b{display:block;color:var(--ink);font-size:15px;margin-bottom:6px}
 @media (max-width:900px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.appbody{grid-template-columns:1fr}}
 @media (max-width:560px){header,.filters,.wrap{padding-left:16px;padding-right:16px}.fresh{margin-left:0}}
 </style></head><body>
@@ -89,16 +106,20 @@ dialog ol{font-size:13px;padding-left:18px;margin:8px 0;color:var(--mute)}.check
   <h1>📡 Creative Tracker</h1>
   <nav id="tabs"><a class="on" data-v="lib">🎬 Thư viện</a><a data-v="comp">🏢 Đối thủ</a></nav>
   <span class="fresh" id="fresh"></span>
+  <span class="prog" id="prog" hidden><span class="ptext" id="ptext"></span><span class="bar"><i id="pbar"></i></span><button class="btn" id="stopScan" title="Dừng: page đang quét bị bỏ, các page đã xong giữ nguyên">⏹ Dừng</button></span>
   <button class="btn" id="scanAll">↻ Quét tất cả</button>
 </header>
 <div class="filters">
   <label>App: <select id="fApp"></select></label>
   <label>Page: <select id="fPage"></select></label>
   <label>Từ <input type="date" id="fFrom"></label><label>đến <input type="date" id="fTo"></label>
+  <span class="chips" style="margin:0" id="rangeChips"><button class="chip" data-range="today" title="Ngày theo Ad Library (giờ Thái Bình Dương)">Hôm nay</button><button class="chip" data-range="yday" title="Ngày theo Ad Library (giờ Thái Bình Dương)">Hôm qua</button><button class="chip" data-days="7">7 ngày</button><button class="chip on" data-days="14">14 ngày</button><button class="chip" data-days="30">30 ngày</button><button class="chip" data-days="90">90 ngày</button></span>
+  <span class="small" id="laNote" hidden>ngày theo Ad Library (giờ Thái Bình Dương) — hôm nay có thể chưa đủ</span>
   <span class="small">nguồn: Meta Ad Library (công khai) · áp cho cả 2 tab</span>
 </div>
 <div class="wrap">
   <section class="v on" id="v-lib">
+    <div class="rwarn" id="rwarnLib" hidden></div>
     <div class="kpis" id="kpis"></div>
     <div class="chips" id="libChips">
       <button class="chip on" data-f="all">Tất cả</button><button class="chip" data-f="new">🆕 Mới (7 ngày)</button>
@@ -114,11 +135,14 @@ dialog ol{font-size:13px;padding-left:18px;margin:8px 0;color:var(--mute)}.check
       <div class="chips" style="margin:0" id="compChips"><button class="chip on" data-c="all">Tất cả</button><button class="chip" data-c="done">Đã quét</button><button class="chip" data-c="todo">Chưa quét</button></div>
       <button class="btn pri bigadd" id="addComp">＋ Thêm đối thủ</button></div>
       <p class="small" style="margin:8px 0 0">Mỗi app đối thủ gồm các fanpage chạy quảng cáo cho app đó. Tự tìm page trên Ad Library rồi dán link vào bằng nút <b>＋ Thêm page</b>.</p>
+      <p class="scanrange" id="scanRange" style="margin:6px 0 0"></p>
+      <div class="rwarn" id="rwarnComp" hidden style="margin:8px 0 0"></div>
     </div>
     <details class="howto" id="howto" open><summary>📌 Cách thêm đối thủ (3 bước)</summary><div class="steps">
       <div><b class="n">1</b>Mở <a href="https://www.facebook.com/ads/library/" target="_blank" rel="noopener">Ad Library</a>, chọn <b>All</b> + <b>All ads</b>, gõ tên page/app trong "ngoặc kép".<img id="hw1" alt="Bước 1"></div>
       <div><b class="n">2</b>Bấm tên page trên một quảng cáo → trang riêng của page mở ra → <b>copy link</b> trên thanh địa chỉ (có <code>view_all_page_id</code>).<img id="hw2" alt="Bước 2"></div>
       <div><b class="n">3</b>Bấm <b>＋ Thêm đối thủ</b> (app mới) hoặc <b>＋ Thêm page</b> trên thẻ app → dán link → <b>↻ Quét</b>.<img id="hw3" alt="Bước 3"></div></div></details>
+    <details class="howto" id="logbox"><summary>📜 Xem log quét</summary><pre id="logpre">Chưa có lượt quét nào từ lúc mở trang.</pre></details>
     <div id="apps"></div>
   </section>
 </div>
@@ -160,7 +184,7 @@ function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('on'); 
 function fillFilters(){
   const apps = D.apps.filter(a=>a.scanned).map(a=>a.app);
   $('#fApp').innerHTML = '<option value="">Tất cả app ('+D.apps.length+')</option>' + D.apps.map(a=>`<option>${esc(a.app)}</option>`).join('');
-  $('#fFrom').value = D.since; $('#fTo').value = D.today; fillPages();
+  $('#fFrom').value = D.since; $('#fTo').value = D.until||D.today; fillPages();
 }
 function fillPages(){
   const app = $('#fApp').value;
@@ -189,10 +213,10 @@ function kpis(){
   const run = D.cards.filter(x=>(!app||x.app===app)&&x.active).length;
   $('#kpis').innerHTML = `
     <div class="kpi"><span>Creative mới hôm nay</span><b>${sum(D.today,2)}</b><em>hôm qua: ${days.filter(d=>d[0]===yday).reduce((s,d)=>s+d[2],0)}</em></div>
-    <div class="kpi"><span>Creative mới 7 ngày</span><b>${sum(NEW_FROM,2)}</b><em>14 ngày: ${sum(D.since,2)}</em></div>
+    <div class="kpi"><span>Creative mới 7 ngày</span><b>${sum(NEW_FROM,2)}</b><em>14 ngày: ${sum(addDays(D.today,-14),2)}</em></div>
     <div class="kpi"><span>Bộ mới hôm nay</span><b>${sum(D.today,3)}</b><em>hôm qua: ${days.filter(d=>d[0]===yday).reduce((s,d)=>s+d[3],0)}</em></div>
-    <div class="kpi"><span>Bộ mới 7 ngày</span><b>${sum(NEW_FROM,3)}</b><em>14 ngày: ${sum(D.since,3)}</em></div>
-    <div class="kpi"><span>Quảng cáo mới 7 ngày</span><b>${sum(NEW_FROM,1)}</b><em>creative đang chạy: ${run}</em></div>`;
+    <div class="kpi"><span>Bộ mới 7 ngày</span><b>${sum(NEW_FROM,3)}</b><em>14 ngày: ${sum(addDays(D.today,-14),3)}</em></div>
+    <div class="kpi"><span>Quảng cáo mới 7 ngày</span><b>${sum(NEW_FROM,1)}</b><em>đang chạy trong khoảng xem: ${run} creative</em></div>`;
 }
 // chip row shared by the card and the viewer: start day · active state · ads sharing the creative
 const tags = x => `<div class="tags"><span class="t" title="Ngày bắt đầu chạy (Ad Library)">▶ ${dmy(x.first_day)}</span>
@@ -215,7 +239,9 @@ function renderLib(){
     <div class="cap"><b title="${esc(x.app)}">${esc(x.app)}</b><span class="small" title="${esc(x.page_name)}">${esc(x.page_name)}</span>
       ${tags(x)}
       <div class="row"><button class="dl" data-dl="${esc(x.key)}">⬇ Tải ${x.kind==='video'?'video':'ảnh'}</button><a href="${AL(x.ad_id)}" target="_blank" rel="noopener">Ad Library ↗</a></div></div></div>`).join('')
-    : `<div class="empty" style="grid-column:1/-1">${D.apps.some(a=>a.scanned)?'Không có creative nào khớp bộ lọc.':'<b>Chưa có dữ liệu.</b>Sang tab 🏢 Đối thủ, thêm app + page rồi bấm ↻ Quét.'}</div>`;
+    : `<div class="empty" style="grid-column:1/-1">${!D.apps.some(a=>a.scanned) ? '<b>Chưa có dữ liệu.</b>Sang tab 🏢 Đối thủ, thêm app + page rồi bấm ↻ Quét.'
+        : D.reusedAds && D.reusedAds===D.newAds ? `<b>Không có creative mới từ ${dmy($('#fFrom').value)} đến ${dmy($('#fTo').value)}.</b>Có ${D.newAds} quảng cáo mới bắt đầu chạy trong khoảng này, nhưng tất cả đều dùng lại creative cũ (đã chạy từ trước). Chọn khoảng dài hơn để xem các creative đó.`
+        : 'Không có creative nào khớp bộ lọc.'}</div>`;
 }
 
 // ---------- Đối thủ ----------
@@ -234,6 +260,42 @@ function cov(s){
   return (capped||(c!=null&&c<0.98)) ? `<span class="tag warn">⚠ ${t}</span>` : `<span class="tag ok">${t}</span>`;
 }
 const when = s => s ? new Date(s.at).toLocaleString('vi-VN',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'}) : '—';
+let SCAN = {running:false, pages:{}, batch:{total:0,done:0,failed:0}, log:[]};
+const hhmm = t => new Date(t).toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'});
+const pct = c => c==null ? 'không biết tổng' : `độ phủ ${Math.round(c*100)}%`;
+// live state of the scan queue wins; otherwise the last scan stored in the database
+function statusCell(p){
+  const s = SCAN.pages[p.key];
+  if(s){
+    if(s.status==='queued') return `<span class="st q">chờ quét${s.pos?` · #${s.pos}`:''}</span>`;
+    if(s.status==='running') return (s.total==null && !s.collected && !s.scrolls)
+      ? `<span class="st run">đang quét · đang mở Ad Library…</span>`
+      : `<span class="st run">đang quét · đã thu ${s.collected||0}${s.total!=null?'/'+s.total:''} · cuộn ${s.scrolls||0}</span>`;
+    if(s.status==='done'){ const low=(s.coverage!=null&&s.coverage<0.98)||(s.warnings||[]).some(w=>w.includes('Chạm trần'));
+      return `<span class="st ${low?'warn':'ok'}">${low?'⚠':'✓'} xong ${hhmm(s.at*1000)} · khoảng ${dmy(s.since)}–${dmy(D.today)} · ${s.collected} QC · ${pct(s.coverage)}</span>`; }
+    if(s.status==='error') return `<span class="st err" title="${esc(s.message)}">⚠ lỗi: ${esc((s.message||'').slice(0,60))}</span>`;
+    if(s.status==='stopped') return `<span class="st">⏹ đã dừng</span>`;
+  }
+  const d = p.scan;
+  if(!d) return '<span class="st">chưa quét</span>';
+  const low=(d.coverage!=null&&d.coverage<0.98)||(d.warnings||[]).some(w=>w.includes('Chạm trần'));
+  const short = d.since && d.since > $('#fFrom').value;          // viewing further back than this page was scanned
+  return `<span class="st ${low||short?'warn':'ok'}" title="${short?'Khoảng đang xem bắt đầu trước ngày đã quét — bấm ↻ Quét để lấy thêm':''}">${low||short?'⚠':'✓'} xong ${hhmm(d.at)} ${new Date(d.at).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'})} · khoảng ${dmy(d.since)}–${dmy(new Date(d.at).toISOString().slice(0,10))} · ${d.collected} QC · ${pct(d.coverage)}</span>`;
+}
+function rangeInfo(){
+  const from=$('#fFrom').value, days=Math.round((new Date(D.today)-new Date(from))/864e5);
+  const to=$('#fTo').value, only = from===to ? ` — đang xem riêng ngày ${dmy(from)}` : '';
+  $('#scanRange').innerHTML = `Nút ↻ Quét sẽ quét quảng cáo <b>từ ${dmy(from)} → hôm nay</b> (${days?days+' ngày':'chỉ hôm nay'} — theo ô "Từ" ở trên)${only}. Không quét toàn bộ lịch sử. Ngày tính theo Ad Library (giờ Thái Bình Dương).`
+    + (days>30 ? ` <span class="w">⚠ Khoảng dài: page lớn có thể mất hơn 10 phút.</span>` : '');
+  $('#scanAll').title = `Quét mọi page, quảng cáo từ ${dmy(from)} → hôm nay`;
+  $$('#rangeChips .chip').forEach(c=>{ const [f,t]=chipRange(c); c.classList.toggle('on', f===from && t===$('#fTo').value); });
+  $('#laNote').hidden = $('#fTo').value < D.today;
+  const scanned = D.apps.flatMap(a=>a.pages).filter(p=>p.scan && p.scan.since);
+  const late = scanned.filter(p=>p.scan.since>from);
+  const msg = late.length ? `⚠ ${late.length}/${scanned.length} page đã quét chỉ có dữ liệu từ ${dmy(late.map(p=>p.scan.since).sort().pop())} (sau ngày ${dmy(from)} đang xem). Bấm ↻ Quét để lấy thêm.` : '';
+  ['#rwarnLib','#rwarnComp'].forEach(id=>{ $(id).hidden=!msg; $(id).textContent=msg; });
+}
+const busyKey = k => ['queued','running'].includes((SCAN.pages[k]||{}).status);
 function renderComp(){
   const app=$('#fApp').value;
   let apps = D.apps.filter(a=>!app||a.app===app);
@@ -244,18 +306,19 @@ function renderComp(){
     const d=a.days.filter(x=>inRange(x[0])), cr=d.reduce((s,x)=>s+x[2],0), st=d.reduce((s,x)=>s+x[3],0), qc=d.reduce((s,x)=>s+x[1],0);
     const rows = a.pages.map(p=>`<tr><td class="pg"><a href="${esc(p.link)}" target="_blank" rel="noopener" title="${esc(p.name)} — mở trên Ad Library">${esc(p.name)}</a><span class="small">${esc(p.page_id)}</span></td>
       <td>${esc(p.owner||(p.scan?'Meta không công khai':'—'))}${p.category?`<div class="small">${esc(p.category)}</div>`:''}</td>
-      <td>${p.new_creatives??'—'}</td><td>${cov(p.scan)}</td><td class="small">${when(p.scan)}</td></tr>`).join('');
+      <td>${p.new_creatives??'—'}</td><td>${statusCell(p)}</td>
+      <td><button class="rowbtn" data-scanpage="${esc(p.key)}" ${busyKey(p.key)?'disabled':''} title="Quét riêng page này">↻ Quét</button></td></tr>`).join('');
     return `<div class="panel appcard ${a.scanned?'':'unscanned'}">
       <div class="apphead"><h3>${esc(a.app)}</h3>${a.store?`<a class="store" href="${esc(a.store)}" target="_blank" rel="noopener">${esc(a.store.replace(/^https?:\/\//,''))}</a>`:''}<span class="sp"></span>
         ${a.scanned?`<span class="sum">${qc} QC · <b style="color:var(--blue)">${cr} creative</b> · <b style="color:var(--green)">${st} bộ</b> mới</span>`:'<span class="tag">chưa quét</span>'}
-        <button class="btn" data-addpage="${esc(a.app)}">＋ Thêm page</button><button class="btn" data-scan="${esc(a.app)}">↻ Quét</button></div>
-      <div class="appbody"><div style="overflow-x:auto"><table><thead><tr><th>Page (bấm để mở Ad Library)</th><th>Chủ page</th><th>Creative mới</th><th>Độ phủ</th><th>Quét lúc</th></tr></thead><tbody>${rows}</tbody></table></div>
+        <button class="btn" data-addpage="${esc(a.app)}">＋ Thêm page</button><button class="btn" data-scan="${esc(a.app)}" title="Quét mọi page của app này">↻ Quét app</button></div>
+      <div class="appbody"><div style="overflow-x:auto"><table><thead><tr><th>Page (bấm để mở Ad Library)</th><th>Chủ page</th><th>Creative mới</th><th>Trạng thái quét</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
         ${a.scanned?`<div class="mini"><h4>Creative mới / bộ mới theo ngày</h4>${spark(a.days)}<div class="legend"><span><i style="background:var(--blue)"></i>creative mới</span><span><i style="background:var(--green)"></i>bộ mới</span></div></div>`:''}</div></div>`;
   }).join('') || '<div class="panel empty">Không có app nào.</div>';
 }
 
 // ---------- wiring ----------
-function render(){ renderLib(); renderComp();
+function render(){ renderLib(); renderComp(); rangeInfo();
   const scanned = D.apps.flatMap(a=>a.pages).filter(p=>p.scan);
   const last = scanned.map(p=>p.scan.at).sort().pop();
   $('#fresh').textContent = `Ad Library · quét lúc ${when({at:last})} · ${scanned.length} page · ${D.apps.filter(a=>a.scanned).length}/${D.apps.length} app`;
@@ -263,12 +326,21 @@ function render(){ renderLib(); renderComp();
 $$('#tabs a').forEach(a=>a.onclick=()=>{ $$('#tabs a').forEach(x=>x.classList.toggle('on',x===a)); $$('.v').forEach(v=>v.classList.toggle('on',v.id==='v-'+a.dataset.v)); });
 $$('#libChips .chip[data-f]').forEach(b=>b.onclick=()=>{ libF=b.dataset.f; $$('#libChips .chip[data-f]').forEach(x=>x.classList.toggle('on',x===b)); renderLib(); });
 $$('#compChips .chip').forEach(b=>b.onclick=()=>{ compF=b.dataset.c; $$('#compChips .chip').forEach(x=>x.classList.toggle('on',x===b)); renderComp(); });
-$('#fApp').onchange=()=>{ fillPages(); render(); }; ['#fPage','#fFrom','#fTo','#sort'].forEach(s=>$(s).onchange=render);
-$('#scanAll').onclick=()=>startScan(null);
+$('#fApp').onchange=()=>{ fillPages(); render(); }; ['#fPage','#sort'].forEach(s=>$(s).onchange=render);
+['#fFrom','#fTo'].forEach(s=>$(s).onchange=()=>load());                 // a new window needs data from the server
+// quick ranges: the same [from, to] drives what is shown and what ↻ Quét fetches ("from" → today)
+function chipRange(c){ const t=D.today;
+  if(c.dataset.range==='today') return [t,t];
+  if(c.dataset.range==='yday') return [addDays(t,-1),addDays(t,-1)];
+  return [addDays(t,-c.dataset.days), t]; }
+$$('#rangeChips .chip').forEach(c=>c.onclick=()=>{ const [f,t]=chipRange(c); $('#fFrom').value=f; $('#fTo').value=t; load(); });
+$('#scanAll').onclick=()=>startScan({});
+$('#stopScan').onclick=async()=>{ await api('/api/scan/stop',{}); toast('Đã dừng — các page đã xong giữ nguyên số'); poll(); };
 $$('dialog [data-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
 document.addEventListener('click',e=>{
   const ap=e.target.closest('[data-addpage]'); if(ap){ $('#pgApp').textContent=ap.dataset.addpage; $('#dlgPage').dataset.app=ap.dataset.addpage; $('#pgLink').value=''; $('#pgCheck').textContent=''; $('#dlgPage').showModal(); }
-  const sc=e.target.closest('[data-scan]'); if(sc) startScan(sc.dataset.scan);
+  const sc=e.target.closest('[data-scan]'); if(sc) startScan({app:sc.dataset.scan});
+  const sp=e.target.closest('[data-scanpage]'); if(sp && !sp.disabled) startScan({key:sp.dataset.scanpage});
 });
 function pageIdOf(v){ v=v.trim(); if(/^\d{5,}$/.test(v)) return v; const m=v.match(/[?&]view_all_page_id=(\d+)/); return m?m[1]:null; }
 function checkLink(v,c){ const id=pageIdOf(v);
@@ -331,21 +403,31 @@ $('#wzDone').onclick=async()=>{ const n=$('#appName').value.trim(); if($('#wzLin
 ['hw1','hw2','hw3'].forEach((id,i)=>$('#'+id).src='/static/howto-'+(i+1)+'.png');
 async function api(path,body){ const r=await fetch(path, body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{});
   const j=await r.json().catch(()=>({})); if(!r.ok && r.status!==409) throw new Error(j.error||('HTTP '+r.status)); return j; }
-async function load(){ const [lib,comp]=await Promise.all([api('/api/library'),api('/api/competitors')]);
-  const keepApp=$('#fApp').value, keepPage=$('#fPage').value, keepFrom=$('#fFrom').value, keepTo=$('#fTo').value;
-  D={cards:lib.cards, apps:comp.apps, today:lib.today, since:lib.since}; NEW_FROM=addDays(D.today,-6);
+async function load(){ const keepApp=$('#fApp').value, keepPage=$('#fPage').value, keepFrom=$('#fFrom').value, keepTo=$('#fTo').value;
+  const qs = keepFrom ? `?since=${keepFrom}&until=${keepTo||''}` : '';
+  const [lib,comp]=await Promise.all([api('/api/library'+qs),api('/api/competitors'+qs)]);
+  D={cards:lib.cards, apps:comp.apps, today:lib.today, since:lib.since, until:lib.until, newAds:lib.new_ads, reusedAds:lib.reused_ads}; NEW_FROM=addDays(D.today,-6);
   const valid = new Set(D.cards.map(c=>c.key)); picked.forEach(k=>{ if(!valid.has(k)) picked.delete(k); }); selbar();
   fillFilters(); if(keepApp && D.apps.some(a=>a.app===keepApp)){ $('#fApp').value=keepApp; fillPages(); $('#fPage').value=keepPage; }
   if(keepFrom){ $('#fFrom').value=keepFrom; $('#fTo').value=keepTo; } render(); }
-let polling=null;
-function showScan(st){ const busy=st.running; $('#fresh').classList.toggle('busy',busy);
-  if(busy) $('#fresh').textContent=`⏳ Đang quét: ${st.target} · ${(st.log||[]).slice(-1)[0]||'đang mở Ad Library…'}`.slice(0,120);
-  $$('[data-scan],#scanAll').forEach(b=>b.disabled=busy); }
+let polling=null, lastDone=-1;
+function showScan(st){ SCAN=st; const b=st.batch||{total:0,done:0}, cur=st.current_page;
+  $('#prog').hidden=!st.running; $('#fresh').hidden=st.running;
+  if(st.running){
+    const n=Math.min(b.done+(cur?1:0), b.total);
+    $('#ptext').textContent = cur ? `Đang quét ${n}/${b.total} page · app ${cur.app||'—'} · page ${cur.label||''}`
+                                  : `Chờ page tiếp theo · ${b.done}/${b.total} page đã xong`;
+    $('#pbar').style.width = (b.total? Math.round(100*b.done/b.total):0)+'%'; }
+  $('#logpre').textContent = (st.log||[]).length ? st.log.join('\n') : 'Chưa có lượt quét nào từ lúc mở trang.'; }
 async function poll(){ const st=await api('/api/scan'); showScan(st);
-  if(!st.running){ clearInterval(polling); polling=null; await load(); toast(st.rc===0?'Quét xong — số đã cập nhật':'Quét xong nhưng có lỗi — xem log terminal chạy ctal web'); } }
-async function startScan(app){ const st=await api('/api/scan',{app:app||null});
-  if(!st.started) return toast('Đang có một lượt quét chạy — chờ xong rồi bấm lại');
-  toast('Bắt đầu quét '+(app||'tất cả')+' — mỗi page ~10 giây tới vài phút'); showScan(st); if(!polling) polling=setInterval(poll,2000); }
-api('/api/scan').then(st=>{ if(st.running){ showScan(st); polling=setInterval(poll,2000); } });
+  const done=(st.batch||{}).done||0;
+  if(done!==lastDone){ lastDone=done; await load(); } else { renderComp(); }   // a page finished ⇒ its numbers now
+  if(!st.running && polling){ clearInterval(polling); polling=null; const b=st.batch||{};
+    toast(`Quét xong ${b.done-(b.failed||0)}/${b.total} page`+(b.failed?` · ${b.failed} lỗi/dừng — xem cột Trạng thái`:'')); } }
+async function startScan(what){ const st=await api('/api/scan',{...what, since:$('#fFrom').value}).catch(e=>({error:e.message}));
+  if(st.error) return toast(st.error);
+  toast(st.added ? `Đã xếp ${st.added} page vào hàng đợi · quét từ ${dmy(st.since)}`+(st.planned>st.added?` (${st.planned-st.added} page đang chờ/đang quét sẵn)`:'') : 'Page này đang chờ hoặc đang quét rồi');
+  showScan(st); renderComp(); if(!polling) polling=setInterval(poll,1500); }
+api('/api/scan').then(st=>{ showScan(st); lastDone=(st.batch||{}).done||0; if(st.running) polling=setInterval(poll,1500); });
 load().catch(e=>toast('Không đọc được dữ liệu: '+e.message));
 </script></body></html>

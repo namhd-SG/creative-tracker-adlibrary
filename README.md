@@ -61,10 +61,26 @@ Lần đầu mở, danh sách đối thủ có sẵn 3 app mẫu (4 page nhỏ).
 - Mỗi app là một thẻ: link store, các page (bấm tên page để mở trên Ad Library), chủ page, creative mới, độ phủ, giờ quét, và biểu đồ nhỏ creative mới / bộ mới theo ngày.
 - **＋ Thêm đối thủ**: bước ① tên app + link store → bước ② dán link Ad Library của từng page (thêm được nhiều page). Ghi thẳng vào `doi_thu.csv`.
 - **＋ Thêm page** trên thẻ app: thêm page cho app đã có.
-- **↻ Quét** trên thẻ app (hoặc **↻ Quét tất cả** ở góc trên): quét chạy nền, góc trên hiện "⏳ Đang quét …"; quét xong số tự cập nhật. Mỗi lúc chỉ chạy một lượt quét.
+- **↻ Quét** trên từng dòng page, **↻ Quét app** trên thẻ app, **↻ Quét tất cả** ở góc trên: xếp page vào hàng đợi, quét lần lượt (xem "Quét như thế nào" bên dưới).
 - Khung **📌 Cách thêm đối thủ** ở đầu tab hướng dẫn 3 bước tự tìm page trên Ad Library (thu gọn được).
 
 ![Thêm đối thủ 2 bước](docs/images/web-them-doi-thu.jpg)
+
+### Quét như thế nào
+
+- **Quét theo khoảng ngày, không quét toàn bộ lịch sử.** Mọi nút ↻ Quét (từng page, cả app, tất cả) lấy quảng cáo **từ ngày "Từ" trên thanh lọc → hôm nay**. Mặc định là 14 ngày; chip **Hôm nay / Hôm qua / 7 / 14 / 30 / 90 ngày** đổi nhanh, dùng chung cho phần hiển thị và khoảng quét. Dòng chữ dưới tiêu đề tab Đối thủ luôn ghi rõ khoảng sẽ quét.
+- **Ngày tính theo Ad Library = giờ Thái Bình Dương (Los Angeles)**, chậm hơn giờ Việt Nam 14–15 tiếng. "Hôm nay" là ngày hiện tại ở LA và có thể chưa đủ: quảng cáo của ngày đó còn tiếp tục xuất hiện tới nửa đêm giờ LA.
+- **Hôm qua:** quét quảng cáo có hiển thị từ hôm qua, rồi chỉ hiện **creative bắt đầu chạy đúng hôm qua**. Hôm đó có quảng cáo mới nhưng tất cả dùng lại creative cũ thì trang ghi rõ "Có N quảng cáo mới … đều dùng lại creative cũ", không để trống mà không giải thích.
+- Tool mở trang Ad Library của page với bộ lọc "có hiển thị từ ngày X", cuộn hết danh sách, rồi đếm theo **ngày bắt đầu chạy** của từng quảng cáo. Quét lại cùng page thì **cập nhật, không nhân đôi**.
+- **Vì sao page lớn chậm:** "có hiển thị từ ngày X" tính cả quảng cáo chạy lâu ngày từ trước, không chỉ quảng cáo mới. Ad Library không lọc được theo ngày bắt đầu và không xếp theo ngày, nên tool phải lướt hết. Page vài chục quảng cáo mất ~10 giây; page vài nghìn quảng cáo mất >10 phút (chọn 30 ngày trở lên thì trang hiện cảnh báo).
+- **Quét tất cả = hàng đợi từng page**: page chưa quét đi trước, rồi tới page nhỏ; nghỉ 8–15 giây giữa các page. Cột **Trạng thái quét** của mỗi page cập nhật trực tiếp:
+  - `chờ quét · #n` → `đang quét · đã thu N/M · cuộn k` → `✓ xong HH:MM · khoảng dd/mm–dd/mm · N QC · độ phủ X%`
+  - (hoặc `⚠ lỗi: …` / `⏹ đã dừng`).
+  - Xong page nào thì số của page đó và của app cập nhật ngay.
+- Góc trên hiện tiến độ `Đang quét 3/84 page · app … · page …` kèm nút **⏹ Dừng**: page đang quét bị bỏ, các page đã xong giữ nguyên số. Log chi tiết nằm trong khung **📜 Xem log quét**.
+- Đang xem khoảng dài hơn khoảng đã quét, ví dụ xem 30 ngày nhưng mới quét 14 ngày, thì trang báo "chỉ có dữ liệu từ dd/mm — bấm ↻ Quét để lấy thêm".
+
+![Đang quét: dòng xong, dòng đang quét, dòng chờ](docs/images/web-dang-quet.jpg)
 
 **Ảnh và video được lưu thế nào:** link ảnh/video của Facebook có chữ ký và **hết hạn sau khoảng 4,5 ngày** (đo 104–108 giờ).
 - **Ảnh xem trước** được tải về máy ngay lúc quét (`data/thumbs/`, ~23 KB/ảnh), nên thư viện không mất ảnh.
@@ -215,6 +231,6 @@ Test dùng response thật của Ad Library chụp ngày 29/10/2026 (`tests/fixt
 | `src/ctal/cli.py` | lệnh `ctal app/page/list/scan/report/web` |
 | `src/ctal/web_server.py` · `web/index.html` | giao diện web local (thư viện chuẩn Python, 127.0.0.1) |
 | `src/ctal/web_data.py` | dữ liệu 2 tab Thư viện / Đối thủ |
-| `src/ctal/scan_jobs.py` | chạy `ctal scan` nền từ nút Quét, có trạng thái |
+| `src/ctal/scan_jobs.py` | hàng đợi quét từng page cho nút Quét: trạng thái sống, dừng |
 | `src/ctal/media_download.py` | tải video/ảnh, zip, tự làm mới link hết hạn |
 | `src/ctal/thumbnails.py` · `ad_media_fields.py` | lưu ảnh xem trước; đọc link ảnh/video trong JSON |
