@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "creative-tracker-adlibrary"
+version = "0.1.0"
+description = "Creative Tracker cơ bản: quảng cáo của một fanpage trên Meta Ad Library, đếm creative/bộ mới theo ngày."
+requires-python = ">=3.10"
+dependencies = ["playwright>=1.45"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+ctal = "ctal.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
